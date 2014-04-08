@@ -1,0 +1,50 @@
+<html>
+<head>
+	<title>Converting a table to JSON to a responsive SVG</title>
+
+	<style type="text/css">
+		.barlabels, table{
+			font-family: arial, sans-serif;
+		}
+    .numbers{
+      text-align: right;
+    }
+    .bar{fill:#900;}
+
+    .axis path,
+    .axis line {
+      fill: none;
+      stroke: #555;
+    }
+	</style>
+</head>
+<body>
+<h3>How much do athletes run in different sports</h3>
+<table id="runningTable">
+	<thead>
+		<tr><th scope="col">Sport</th><th scope="col">Miles</th></tr>
+	</thead>
+	<tbody>
+		<tr><td>Baseball</td><td class='numbers'>.50</td></tr>
+		<tr><td>Football</td><td class='numbers'>1.25</td></tr>
+		<tr><td>Basketball</td><td class='numbers'>2.72</td></tr>
+		<tr><td>Soccer</td><td class='numbers'>9.50</td></tr>
+	</tbody>
+</table>
+
+<div id='chart'></div>
+
+	<script type="text/javascript" src="js/jquery.min.js"></script>
+	<script type="text/javascript" src="js/d3.min.js"></script>
+	<script type="text/javascript" src="js/tableToSVG.js"></script>
+	<script type="text/javascript">
+	$( document ).ready(function() {
+	    console.log( "ready!" );
+	    createChart('#runningTable', "#chart", 'Miles', "Sport", 150);
+	});
+	</script>
+</body>
+</html>
+
+
+

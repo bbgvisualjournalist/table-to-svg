@@ -3,7 +3,7 @@
 	<title>Converting a table to JSON to a responsive SVG</title>
 
 	<style type="text/css">
-		.barlabels, table{
+		.barlabels, .barvalues, table{
 			font-family: arial, sans-serif;
 		}
     .numbers{
@@ -34,13 +34,18 @@
 
 <div id='chart'></div>
 
+
+
+
+
 	<script type="text/javascript" src="js/jquery.min.js"></script>
 	<script type="text/javascript" src="js/d3.min.js"></script>
-	<script type="text/javascript" src="js/tableToSVG.js"></script>
+	<script type="text/javascript" src="js/tableToSVG_v3.js"></script>
 	<script type="text/javascript">
 	$( document ).ready(function() {
 	    console.log( "ready!" );
-	    createChart('#runningTable', "#chart", 'Miles', "Sport", 150);
+	    //createChart('#runningTable', "#chart", 'Miles', "Sport", 150,{"height":300, "type":"bar", "data":[5,27,"dog"]});
+	    createChart('#runningTable', "#chart", "Miles", "Sport", {"height":100, "type":"bar", "showTable": false});
 	});
 	</script>
 </body>

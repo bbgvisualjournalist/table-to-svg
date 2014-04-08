@@ -5,6 +5,7 @@ Converts an HTML table to JSON that is rendered as a responsive D3 SVG chart.
 
 The idea here is that if your phone doesn't support SVG/JavaScript you still have access to the data in a light, accessible form. The idea for this came from Filament Group's book on [progressive enhancements](http://filamentgroup.com/dwpe/)
 
+## Creating the chart
 Here's the function to create the chart:
 createChart('#runningTable', "#chart", 'Miles', "Sport", true, 150);
 

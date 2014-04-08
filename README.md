@@ -20,7 +20,7 @@ Here's the [working example](http://54.243.239.169/brian/storytelling/tableToSVG
 
 ## Next steps
 I was thinking about a few different for going forward:
-* Make the parameters optional. So you could set things like graph type etc by only passing the parameters you care about (via an object). There would be required parameters and then an optional object that you could pass additional parameters.
+* Include optional parameters for things like graph type and size by passing the parameters [via an object](http://stackoverflow.com/a/457589/1349055). There would be required parameters and then an optional object that you could pass additional parameters.
 * Or maybe we put the options in the HTML table tags and automate the whole thing? So it automatically creates a chart for tables with a specific attribute or data type.
 * Add some media query styling for the charts
 * At the moment the resize function doesn't work for multiple charts on the page.

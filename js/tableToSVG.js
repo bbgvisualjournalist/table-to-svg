@@ -1,4 +1,4 @@
-  //Runction loops through a table and returns JSON
+  //Function loops through a table and returns JSON
   //There should be/is a way to do this with just D3. :/
   function createJSON(tableName){
     var myRows = [];

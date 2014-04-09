@@ -36,12 +36,13 @@ function createChart(sourceTable, targetChart, graphingVariable, label, options)
   //DEFINE THE VARIABLES --------------------------------------------------------
 
   //Check and set the options
-  var defaultOptions={"type":"column", "graph":"Miles", "height":200, "showTable":true};
+  var defaultOptions={"type":"column", "height":200, "showTable":true, "padding": 10, "ticks": 5};
   if (options){
     if (!options.type){options.type=defaultOptions.type};
-    if (!options.graph){options.graph=defaultOptions.graph};
     if (!options.height){options.height=defaultOptions.height; console.log("You can set the height of the chart by adding -- 'height': #### -- to the options parameter")};
     if (typeof options.showTable === 'undefined'){options.showTable = true;console.log("You can hide the original table by adding a value of -- 'showTable': false -- to the options parameter");};
+    if (!options.padding){options.padding=defaultOptions.padding};
+    if (!options.ticks){options.ticks=defaultOptions.ticks};
   }else{
     options = typeof options !== 'undefined' ? options : defaultOptions;
     console.log("No option parameters set, so we'll just use the default settings :)")
@@ -56,11 +57,14 @@ function createChart(sourceTable, targetChart, graphingVariable, label, options)
     , width = width - margin.left - margin.right
     , height = options.height
     , barPadding = 20
-    , padding = 20
+    , padding = options.padding
     , paddingLeftLabels = 80 //arbitrary
     , setResize = false;
 
-
+if (options.type=='bar'){
+  height=tableJSON.length*50;
+  console.log('Automatically setting the height to '+height+" pixels (because of the amount of data");
+}
 
 
   //CREATE THE DIFFERENT X- and Y-SCALES --------------------------------------------------------
@@ -73,7 +77,7 @@ function createChart(sourceTable, targetChart, graphingVariable, label, options)
   var yAxis=d3.svg.axis()
   	.scale(yScale)
   	.orient('left')
-  	.ticks(5);
+  	.ticks(options.ticks);
 
   //Create the xScale
   var xScale=d3.scale.linear()
@@ -82,20 +86,24 @@ function createChart(sourceTable, targetChart, graphingVariable, label, options)
 
   var xAxis=d3.svg.axis()
     .scale(xScale)
-    .orient('top')
-    .ticks(5);
+    .orient('bottom')
+    .ticks(options.ticks);
 
 
 
   //Adding the y-axis
-  function addYaxis(){newSVG.append('g')
+  function addYaxis(){
+    newSVG.append('g')
     .attr('class', 'axis')
     .attr('transform','translate('+padding+',0)')
     .call(yAxis);
   }
-  function addXaxis(){newSVG.append('g')
+  function addXaxis(){
+    newSVG.append('g')
     .attr('class', 'axis')
+    .attr('transform', 'translate(0,' + height + ')')
     .call(xAxis);
+
     //.attr('y', 'height')
   }
 
@@ -115,10 +123,14 @@ function createChart(sourceTable, targetChart, graphingVariable, label, options)
     .enter()
     .append('g')
 
+//fill-opacity
+  var hoverColor=function(){d3.select(this).style("fill-opacity", .8);}
+  var offColor=function(){d3.select(this).style("fill-opacity", 1);}
+  //var hoverColor=function(){d3.select(this).style("fill", "#C00");}
+  //var offColor=function(){d3.select(this).style("fill", "#900");}
 
-  var hoverColor=function(){d3.select(this).style("fill", "#C00");}
-  var offColor=function(){d3.select(this).style("fill", "#900");}
 
+  d3.select(this).parentNode
   //DEFINE THE DIFFERENT TYPES OF CHARTS--------------------------------------------------------
   
   //Horizontal bar chart--------------------------------------------------------
@@ -144,14 +156,14 @@ function createChart(sourceTable, targetChart, graphingVariable, label, options)
     g.append('text')
       .text(function(d){return d[label]})
       .attr('x',0)
-      .attr('y',function(d,i){return i*(height/tableJSON.length)+.5*(height / tableJSON.length)+20})
+      .attr('y',function(d,i){return i*(height/tableJSON.length)+.5*(height / tableJSON.length)+padding})
       .classed('barlabels', true);    
 
     //Add the values
     g.append('text')
       .text(function(d){return d[graphingVariable]})
       .attr('x',function(d){return xScale(d[graphingVariable])+5;})
-      .attr('y',function(d,i){return i*(height/tableJSON.length)+.5*(height / tableJSON.length)+20})
+      .attr('y',function(d,i){return i*(height/tableJSON.length)+.5*(height / tableJSON.length)+padding})
       .classed('barvalues', true);
 
     //Add the xAxis
@@ -252,7 +264,14 @@ function createChart(sourceTable, targetChart, graphingVariable, label, options)
       .attr('x',barValuesX)//Center the labels
 
     //I'll need to adjust the xAxis for horizontal charts
-    //xAxis.scale(xScale)
+    //http://eyeseast.github.io/visible-data/2013/08/28/responsive-charts-with-d3/
+    if(options.type=='bar'){
+      width = parseInt(d3.select(targetChart).style('width'))
+      width = width - margin.left - margin.right
+
+      xScale.range([paddingLeftLabels,width-padding]);
+      d3.select(targetChart).select('g').call(xAxis.orient('bottom'));
+    }
   }
 
   //Create the graph depending on what type of chart is set in the options--------------------------------------------------------
@@ -269,6 +288,12 @@ Known issues:
 resize the horizontal axis on resize
 limit label widths (or hide labels) below a certain point
 adjust the height of the graphic based on the amoung of variables being graphed 
-Adjust the distance between bars based on the height to data ratio
+Adjust the distance between bars based on the height to data ratio'
+
+Things I fixed:
+Made the x-axis scale
+Made the height of a bar chart scale depending on the number of data points.
+Added an optional parameter for ticks
+Figured out how to move the xAxis to the bottom
 */
 

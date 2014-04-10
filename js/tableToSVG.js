@@ -39,7 +39,7 @@ function isNumber(n) {
 
 
 /*Creating a D3 SVG chart*/
-function createChart(sourceTable, targetChart, graphingVariable, label, options){
+function createChart(type, sourceTable, targetChart, graphingVariable, label, options){
 
   //CREATE THE JSON FROM THE TABLE --------------------------------------------------------
   var tableJSON= createJSON(sourceTable);
@@ -50,9 +50,9 @@ function createChart(sourceTable, targetChart, graphingVariable, label, options)
   //DEFINE THE VARIABLES --------------------------------------------------------
 
   //Check and set the options
-  var defaultOptions={"type":"column", "height":200, "showTable":true, "barHeight": 30, "padding": 10, "paddingLabels": 80, "ticks": 4, "xAxis":true};
+  var defaultOptions={"height":200, "showTable":true, "barHeight": 30, "padding": 10, "paddingLabels": 80, "ticks": 4, "xAxis":true};
   if (options){
-    if (!options.type){options.type=defaultOptions.type; console.log("Currently supporting 'bar', 'column' and 'donut'(?) charts")};
+    //if (!type){type=defaulttype; console.log("Currently supporting 'bar', 'column' and 'donut'(?) charts")};
     if (!options.height){options.height=defaultOptions.height; console.log("You can set the height of the chart by adding -- 'height': #### -- to the options parameter")};
     if (typeof options.showTable === 'undefined'){options.showTable = true;console.log("You can hide the original table by adding a value of -- 'showTable': false -- to the options parameter");};
     if (!options.barHeight){options.barHeight=defaultOptions.barHeight};
@@ -69,7 +69,7 @@ function createChart(sourceTable, targetChart, graphingVariable, label, options)
   }
 
   //set the variables — some of these seem redundant and arbitrary
-  var margin = {top: 20, left: 10, bottom: 10, right: 10}
+  var margin = {top: 20, left: 10, bottom: 10, right: 30}
     , width = parseInt(d3.select(targetChart).style('width'))
     , width = width - margin.left - margin.right
     , height = options.height
@@ -78,9 +78,9 @@ function createChart(sourceTable, targetChart, graphingVariable, label, options)
     , paddingLeftLabels = options.paddingLabels //arbitrary
     , setResize = false;
 
-if (options.type=='bar'){
+if (type=='bar'){
   height=tableJSON.length*options.barHeight;
-  console.log('Automatically setting the height to '+height+" pixels (because of the amount of data");
+  console.log('Automatically setting the height to '+height+" pixels (because of the amount of data).");
 }
 
 //The old JSON was saving numbers as strings. Needed to convert them to strings.
@@ -315,13 +315,13 @@ if (options.type=='bar'){
   }
   //Set the resizing options based on the type of chart-------------------------------
   var rectXpos, rectW, barLabelsX, barValuesX;
-  if(options.type=='column'){
+  if(type=='column'){
     rectXpos=function (d,i){return i*(width/tableJSON.length)+padding}; 
     rectW=function (d){return width / tableJSON.length - barPadding}; 
     barLabelsX=function (d, i){return i * (width/tableJSON.length)+(width/tableJSON.length-barPadding)/2+padding;};
     barValuesX=function (d, i){return i * (width/tableJSON.length)+(width/tableJSON.length-barPadding)/2+padding;};
   }
-  if(options.type=='bar'){
+  if(type=='bar'){
     rectXpos=paddingLeftLabels;
     rectW=function(d){xScale.range([paddingLeftLabels,width-padding]);return xScale(d[graphingVariable]) - paddingLeftLabels;};//Make this a function to calculate the width
     barLabelsX=0;
@@ -351,7 +351,7 @@ if (options.type=='bar'){
 
     //I'll need to adjust the xAxis for horizontal charts
     //http://eyeseast.github.io/visible-data/2013/08/28/responsive-charts-with-d3/
-    if(options.type=='bar'&&options.xAxis){
+    if(type=='bar'&&options.xAxis){
       width = parseInt(d3.select(targetChart).style('width'))
       width = width - margin.left - margin.right
 
@@ -361,24 +361,22 @@ if (options.type=='bar'){
   }
 
   //Create the graph depending on what type of chart is set in the options--------------------------------------------------------
-  if (options.type=="column"){
+  if (type=="column"){
     verticalBars()
-  } else if (options.type=="bar"){
+  } else if (type=="bar"){
     horizontalBars()
-  } else if(options.type=="donut"){
+  } else if(type=="donut"){
     donut();
   } else {
-    console.log("Sorry, we don't currently support "+options.type+" charts.")
+    console.log("Sorry, we don't currently support "+type+" charts.")
   };
 }
 
 /*
 Known issues:
-* Move the graph 'type' from the optional parameters to the required section
 * limit label widths (or hide labels) below a certain point
 
 Things I fixed:
-Added new optional parameters for barHeight and paddingLeft
-Fixed JSON conversion so that numbers are saved as numbers (instead of strings). Fixes the bug with numbers >10.
+* Moved the graph 'type' from the optional parameters to the required section
 */
 

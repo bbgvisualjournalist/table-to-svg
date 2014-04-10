@@ -44,6 +44,7 @@
 	<script type="text/javascript">
 	$( document ).ready(function() {
 	    createChart('#runningTable', "#chart", "Miles", "Sport", {"height":200, "type":"bar", "showTable": true});
+	    createChart('#runningTable', "#chart", "Miles", "Sport", {"type":"bar", "showTable": true, "barHeight":50, "ticks":4, "xAxis": true, "paddingLabels":100});
 	    //createChart('#fruitTable', "#chart2", "Oranges", "Day", {"height":300, "type":"column", "showTable": false});
 	});
 	</script>

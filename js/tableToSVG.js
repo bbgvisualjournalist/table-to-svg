@@ -1,4 +1,5 @@
 //Function loops through a table and returns JSON —— There's probably a way to do this with D3. :/ 
+//This is saving the numeric data as a string, which is messing up D3. We could use parseFloat(d.r) throughout but it'd be better to fix the JSON.
 function createJSON(tableName){
   var myRows = [];
   var headersText = [];
@@ -6,6 +7,7 @@ function createJSON(tableName){
   var tableHeaders=tableName+" th"
     , rowNames = tableName+" tbody tr"
 	var $headers = $(tableHeaders);
+  var theCellValue = '';
 
 	// Loop through grabbing everything
 	var $rows = $(rowNames).each(function(index) {
@@ -18,31 +20,46 @@ function createJSON(tableName){
 	      headersText[cellIndex] = $($headers[cellIndex]).text();
 	    }
 	    // Update the row object with the header/cell combo
-	    myRows[index][headersText[cellIndex]] = $(this).text();
+      theCellValue = $(this).text();
+
+      if ( isNumber( theCellValue ) == true ){
+        theCellValue = parseFloat( theCellValue );
+      }
+
+      myRows[ index ][ headersText[ cellIndex ] ] = theCellValue;      
 	  });    
 	});
   return myRows;
 }
 
+function isNumber(n) {
+  return !isNaN(parseFloat(n)) && isFinite(n);
+}
+
+
 
 /*Creating a D3 SVG chart*/
-function createChart(sourceTable, targetChart, graphingVariable, label, options){//graphing Variable='miles run' and labels are things like "Soccer, baseball etc."
+function createChart(sourceTable, targetChart, graphingVariable, label, options){
 
   //CREATE THE JSON FROM THE TABLE --------------------------------------------------------
   var tableJSON= createJSON(sourceTable);
   console.log(tableJSON);
+  //console.log(tableJSON[0].Miles);
 
 
   //DEFINE THE VARIABLES --------------------------------------------------------
 
   //Check and set the options
-  var defaultOptions={"type":"column", "height":200, "showTable":true, "padding": 10, "ticks": 5};
+  var defaultOptions={"type":"column", "height":200, "showTable":true, "barHeight": 30, "padding": 10, "paddingLabels": 80, "ticks": 4, "xAxis":true};
   if (options){
-    if (!options.type){options.type=defaultOptions.type};
+    if (!options.type){options.type=defaultOptions.type; console.log("Currently supporting 'bar', 'column' and 'donut'(?) charts")};
     if (!options.height){options.height=defaultOptions.height; console.log("You can set the height of the chart by adding -- 'height': #### -- to the options parameter")};
     if (typeof options.showTable === 'undefined'){options.showTable = true;console.log("You can hide the original table by adding a value of -- 'showTable': false -- to the options parameter");};
+    if (!options.barHeight){options.barHeight=defaultOptions.barHeight};
     if (!options.padding){options.padding=defaultOptions.padding};
-    if (!options.ticks){options.ticks=defaultOptions.ticks};
+    if (!options.paddingLabels){options.paddingLabels=defaultOptions.paddingLabels};
+    if (typeof options.xAxis === 'undefined'){options.xAxis = true;console.log("You can hide the xAxis by adding -- 'xAxis': false -- to the options parameter");};
+    if (!options.ticks){options.ticks=defaultOptions.ticks; console.log("You can set the approximate number of ticks in the axis by adding 'ticks':5")};
   }else{
     options = typeof options !== 'undefined' ? options : defaultOptions;
     console.log("No option parameters set, so we'll just use the default settings :)")
@@ -56,15 +73,19 @@ function createChart(sourceTable, targetChart, graphingVariable, label, options)
     , width = parseInt(d3.select(targetChart).style('width'))
     , width = width - margin.left - margin.right
     , height = options.height
-    , barPadding = 20
+    , barPadding = 10
     , padding = options.padding
-    , paddingLeftLabels = 80 //arbitrary
+    , paddingLeftLabels = options.paddingLabels //arbitrary
     , setResize = false;
 
 if (options.type=='bar'){
-  height=tableJSON.length*50;
+  height=tableJSON.length*options.barHeight;
   console.log('Automatically setting the height to '+height+" pixels (because of the amount of data");
 }
+
+//The old JSON was saving numbers as strings. Needed to convert them to strings.
+//console.log("Max value: "+ d3.max(tableJSON, function(d){return d[graphingVariable]}));//parseFloat(d.r) ??
+//console.log("Max value: "+ d3.max(tableJSON, function(d){return parseFloat( d[graphingVariable] )})  );//parseFloat(d.r) ??
 
 
   //CREATE THE DIFFERENT X- and Y-SCALES --------------------------------------------------------
@@ -99,12 +120,12 @@ if (options.type=='bar'){
     .call(yAxis);
   }
   function addXaxis(){
-    newSVG.append('g')
-    .attr('class', 'axis')
-    .attr('transform', 'translate(0,' + height + ')')
-    .call(xAxis);
-
-    //.attr('y', 'height')
+    if (options.xAxis){
+      newSVG.append('g')
+      .attr('class', 'axis')
+      .attr('transform', 'translate(0,' + height + ')')//moves the axis to the bottom of the graphic
+      .call(xAxis);
+    }
   }
 
 
@@ -123,16 +144,81 @@ if (options.type=='bar'){
     .enter()
     .append('g')
 
-//fill-opacity
+
   var hoverColor=function(){d3.select(this).style("fill-opacity", .8);}
   var offColor=function(){d3.select(this).style("fill-opacity", 1);}
   //var hoverColor=function(){d3.select(this).style("fill", "#C00");}
   //var offColor=function(){d3.select(this).style("fill", "#900");}
 
 
-  d3.select(this).parentNode
   //DEFINE THE DIFFERENT TYPES OF CHARTS--------------------------------------------------------
   
+
+  //Donut chart ----------------------------------------------------------------
+  function donut(){
+    //http://jsfiddle.net/gregfedorov/Qh9X5/9/
+    var dataset = {
+      apples: [53245, 28479, 19697, 24037, 40245],
+    };
+    //dataset=tableJSON.Miles
+
+    var radius = Math.min(width, height) / 2;
+    var color = d3.scale.category20();
+
+    var pie = d3.layout.pie()
+      .sort(null);
+
+    var arc = d3.svg.arc()
+        .innerRadius(radius - 100)
+        .outerRadius(radius - 50);
+
+
+    newSVG.append("g")
+        .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
+
+    var path = newSVG.selectAll("path")
+      .data(pie(dataset.apples))//.data(pie(tableJSON.Miles)) 
+      .enter().append("path")
+      .attr("fill", function(d, i) { return color(i); })
+      .attr("d", arc);
+    /*
+
+    var color = d3.scale.ordinal()
+        .range(["#98abc5", "#8a89a6", "#7b6888", "#6b486b", "#a05d56", "#d0743c", "#ff8c00"]);
+
+    var arc = d3.svg.arc()
+        .outerRadius(radius - 10)
+        .innerRadius(radius - 70);
+
+    var pie = d3.layout.pie()
+        .sort(null)
+        .value(function(d) { return d.population; });
+
+    newSVG.append("g").attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
+
+
+    tableJSON.forEach(function(d) {
+      d.Miles = +d.Miles;
+      console.log(d.Miles);
+    });
+
+    var gPie = newSVG.selectAll(".arc")
+        .data(pie(tableJSON))
+      .enter().append("g")
+        .attr("class", "arc");
+
+    gPie.append("path")
+        .attr("d", arc)
+        .style("fill", function(d) { return color(d.data.age); });
+
+    */
+
+
+      console.log('Time to make the donuts.');
+    }
+
+
+
   //Horizontal bar chart--------------------------------------------------------
   function horizontalBars(){
     xScale.range([paddingLeftLabels,width-padding]);
@@ -265,7 +351,7 @@ if (options.type=='bar'){
 
     //I'll need to adjust the xAxis for horizontal charts
     //http://eyeseast.github.io/visible-data/2013/08/28/responsive-charts-with-d3/
-    if(options.type=='bar'){
+    if(options.type=='bar'&&options.xAxis){
       width = parseInt(d3.select(targetChart).style('width'))
       width = width - margin.left - margin.right
 
@@ -277,7 +363,10 @@ if (options.type=='bar'){
   //Create the graph depending on what type of chart is set in the options--------------------------------------------------------
   if (options.type=="column"){
     verticalBars()
-  } else if (options.type=="bar"){horizontalBars()
+  } else if (options.type=="bar"){
+    horizontalBars()
+  } else if(options.type=="donut"){
+    donut();
   } else {
     console.log("Sorry, we don't currently support "+options.type+" charts.")
   };
@@ -285,15 +374,11 @@ if (options.type=='bar'){
 
 /*
 Known issues:
-resize the horizontal axis on resize
-limit label widths (or hide labels) below a certain point
-adjust the height of the graphic based on the amoung of variables being graphed 
-Adjust the distance between bars based on the height to data ratio'
+* Move the graph 'type' from the optional parameters to the required section
+* limit label widths (or hide labels) below a certain point
 
 Things I fixed:
-Made the x-axis scale
-Made the height of a bar chart scale depending on the number of data points.
-Added an optional parameter for ticks
-Figured out how to move the xAxis to the bottom
+Added new optional parameters for barHeight and paddingLeft
+Fixed JSON conversion so that numbers are saved as numbers (instead of strings). Fixes the bug with numbers >10.
 */
 

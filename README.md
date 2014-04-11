@@ -19,7 +19,7 @@ The function parameters are:
 * column you want to graph
 * An object with optional parameters for 'height', 'showTable' (Do you want to show(true) or hide(false) the old chart), 'barHeight' for horizontal bar charts, 'ticks' which determines the approximate number of ticks on the axis, 'xAxis' do you want to show (true) or hide (false), and 'paddingLabels' to adjust where the horizontal bars start based on the bar labels.
 
-Here's a [horizontal bar chart example](http://54.243.239.169/brian/storytelling/tableToSVG_bar.html) and a [vertical bar chart example](http://54.243.239.169/brian/storytelling/tableToSVG.html).
+Here's a [horizontal bar chart](http://54.243.239.169/brian/storytelling/tableToSVG_bar.html), a [vertical bar chart](http://54.243.239.169/brian/storytelling/tableToSVG.html) and a [donut chart](http://54.243.239.169/brian/storytelling/tableToSVG_donut.html).
 
 ## Next steps
 Bugs, features and optimizations:

@@ -46,41 +46,24 @@ function createChart(type, sourceTable, targetChart, graphingVariable, options){
   console.log(tableJSON);
   //console.log(tableJSON[0].Miles);
 
-/*
-//Experimenting with creating an automatic scale based on hexidecimal
-var hexnum=0x900;
-console.log(hexnum +"/3="+(hexnum/3))
-function d2h(d) {return d.toString(16);}
-console.log(d2h(3342336*2 ));
-
-var numberOfColorDivisions=8;
-var color_array=[];
-for (i=0;i<numberOfColorDivisions;i++){
-  startColor=0xC00;
-  divisions=startColor/numberOfColorDivisions;
-  color_array[i]="#"+d2h(i*divisions);
-}
-console.log(color_array);
-*/
 
 
 
   //DEFINE THE VARIABLES --------------------------------------------------------
 
   //Check and set the options
-  var defaultOptions={"labels":"", "height":200, "showTable":true, "barHeight": 30, "padding": 15, "paddingLabels": 80, "ticks": 4, "xAxis":true, "colorScale":["#000", "#333", "#666", "#999"], "donutHole": 35};
+  var defaultOptions={"labels":"", "height":200, "showTable":true, "barHeight": 30, "padding": 15, "paddingLabels": 80, "ticks": 4, "xAxis":true, "colorScale":["#000", "#333", "#666", "#999"], "donutHole": 55};
   if (options){
-    //if (!type){type=defaulttype; console.log("Currently supporting 'bar', 'column' and 'donut'(?) charts")};
-    if (!options.labels){options.labels=defaultOptions.labels};
-    if (!options.height){options.height=defaultOptions.height; console.log("You can set the height of the chart by adding -- 'height': #### -- to the options parameter")};
-    if (typeof options.showTable === 'undefined'){options.showTable = true;console.log("You can hide the original table by adding a value of -- 'showTable': false -- to the options parameter");};
-    if (!options.barHeight){options.barHeight=defaultOptions.barHeight};
-    if (!options.padding){options.padding=defaultOptions.padding};
-    if (!options.paddingLabels){options.paddingLabels=defaultOptions.paddingLabels};
-    if (typeof options.xAxis === 'undefined'){options.xAxis = true;console.log("You can hide the xAxis by adding -- 'xAxis': false -- to the options parameter");};
-    if (!options.ticks){options.ticks=defaultOptions.ticks; console.log("You can set the approximate number of ticks in the axis by adding 'ticks':5")};
-    if (!options.colorScale){options.colorScale=defaultOptions.colorScale; console.log("You can set the colorScale")};
-    if (!options.donutHole){options.donutHole=defaultOptions.donutHole;};
+    if (! options.labels ) {options.labels=defaultOptions.labels};
+    if (! options.height ) {options.height=defaultOptions.height; console.log("You can set the height of the chart by adding -- 'height': #### -- to the options parameter")};
+    if (typeof options.showTable === 'undefined') {options.showTable = true;console.log("You can hide the original table by adding a value of -- 'showTable': false -- to the options parameter");};
+    if (! options.barHeight ) {options.barHeight=defaultOptions.barHeight};
+    if (! options.padding ) {options.padding=defaultOptions.padding};
+    if (! options.paddingLabels ) {options.paddingLabels=defaultOptions.paddingLabels};
+    if (typeof options.xAxis === 'undefined' ) {options.xAxis = true;console.log("You can hide the xAxis by adding -- 'xAxis': false -- to the options parameter");};
+    if (! options.ticks ) {options.ticks=defaultOptions.ticks; console.log("You can set the approximate number of ticks in the axis by adding 'ticks':5")};
+    if (! options.colorScale ) {options.colorScale=defaultOptions.colorScale; console.log("You can set the colorScale")};
+    if (! options.donutHole ) {options.donutHole=defaultOptions.donutHole;};
   }else{
     options = typeof options !== 'undefined' ? options : defaultOptions;
     console.log("No option parameters set, so we'll just use the default settings :)")
@@ -100,7 +83,7 @@ console.log(color_array);
     , paddingLeftLabels = 0
     , setResize = false
     , label = options.labels
-    , donutHole= (height/2) - options.donutHole;
+    , donutHole= options.donutHole;
 
 if(options.labels!=""){paddingLeftLabels = options.paddingLabels};
 
@@ -110,7 +93,7 @@ if (type=='bar'){
 }
 
 if (type=='pie'){
-  donutHole=height/2;
+  donutHole=0;
 }
 
 
@@ -187,31 +170,19 @@ if (type=='pie'){
     //create a key? position key responsively?
     //make the text visible on value labels
     //add onclick so that you can find the data via on click.
-
+    //From interactive data viz book and http://bl.ocks.org/Guerino1/2295263
     //http://jsfiddle.net/gregfedorov/Qh9X5/9/
+
     //var color=d3.scale.category10();
     var color = d3.scale.ordinal()
       .range(options.colorScale);
-/*
-    //There's a simpler way to get the data in here.
-    var dataset = {
-      myData: [53245, 28479, 19697, 24037, 40245],
-    };
-    var myArray=[]
-    for (i=0;i<tableJSON.length;i++){
-      myArray[i]=tableJSON[i].Miles
-    }
-    dataset.myData=myArray;
-
-*/
 
     //Center the pieChart
     newSVG.attr("transform", "translate(" + ((width / 2)-padding*3) + "," + 0 + ")");
 
-    //From interactive data viz book and http://bl.ocks.org/Guerino1/2295263
 
     var outerRadius=height/2;
-    var innerRadius=0;
+    var innerRadius=donutHole;
     var arc=d3.svg.arc()
       .innerRadius(innerRadius)
       .outerRadius(outerRadius)
@@ -220,7 +191,7 @@ if (type=='pie'){
 
     var pie=d3.layout.pie()
       .sort(null)//make this an optional parameter?
-      .value(function(d) { return d.Miles; })
+      .value(function(d) { return d[graphingVariable]; })
 
 
     var arcs=newSVG.selectAll('g.arc')
@@ -245,6 +216,9 @@ if (type=='pie'){
             //http://stackoverflow.com/questions/7169370/d3-js-and-document-onready
           }
         });
+
+      //Hardcoded for 'Sport'      .on("mousedown", function(d, i){console.log(d.label+' players run '+d.value+' miles per game.');})
+
 
     arcs.append('text')
       .attr('transform',function(d){return "translate("+arc.centroid(d)+")";})
@@ -422,6 +396,7 @@ if (type=='pie'){
 /*
 Known issues:
 * Pie Chart values are lost in smaller wedges
+* Hardcoded sports as the label for the piechart click.
 
 Things I fixed:
 * Moved the 'labels' from the required parameters to the optional section.
@@ -431,3 +406,4 @@ Things I fixed:
 * Added unique IDs for pie/donut arcs so that they can be styled by CSS.
 
 */
+

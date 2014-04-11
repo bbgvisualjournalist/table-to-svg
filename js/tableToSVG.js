@@ -39,20 +39,39 @@ function isNumber(n) {
 
 
 /*Creating a D3 SVG chart*/
-function createChart(type, sourceTable, targetChart, graphingVariable, label, options){
+function createChart(type, sourceTable, targetChart, graphingVariable, options){
 
   //CREATE THE JSON FROM THE TABLE --------------------------------------------------------
   var tableJSON= createJSON(sourceTable);
   console.log(tableJSON);
   //console.log(tableJSON[0].Miles);
 
+/*
+//Experimenting with creating an automatic scale based on hexidecimal
+var hexnum=0x900;
+console.log(hexnum +"/3="+(hexnum/3))
+function d2h(d) {return d.toString(16);}
+console.log(d2h(3342336*2 ));
+
+var numberOfColorDivisions=8;
+var color_array=[];
+for (i=0;i<numberOfColorDivisions;i++){
+  startColor=0xC00;
+  divisions=startColor/numberOfColorDivisions;
+  color_array[i]="#"+d2h(i*divisions);
+}
+console.log(color_array);
+*/
+
+
 
   //DEFINE THE VARIABLES --------------------------------------------------------
 
   //Check and set the options
-  var defaultOptions={"height":200, "showTable":true, "barHeight": 30, "padding": 10, "paddingLabels": 80, "ticks": 4, "xAxis":true};
+  var defaultOptions={"labels":"", "height":200, "showTable":true, "barHeight": 30, "padding": 15, "paddingLabels": 80, "ticks": 4, "xAxis":true, "colorScale":["#000", "#333", "#666", "#999"], "donutHole": 35};
   if (options){
     //if (!type){type=defaulttype; console.log("Currently supporting 'bar', 'column' and 'donut'(?) charts")};
+    if (!options.labels){options.labels=defaultOptions.labels};
     if (!options.height){options.height=defaultOptions.height; console.log("You can set the height of the chart by adding -- 'height': #### -- to the options parameter")};
     if (typeof options.showTable === 'undefined'){options.showTable = true;console.log("You can hide the original table by adding a value of -- 'showTable': false -- to the options parameter");};
     if (!options.barHeight){options.barHeight=defaultOptions.barHeight};
@@ -60,6 +79,8 @@ function createChart(type, sourceTable, targetChart, graphingVariable, label, op
     if (!options.paddingLabels){options.paddingLabels=defaultOptions.paddingLabels};
     if (typeof options.xAxis === 'undefined'){options.xAxis = true;console.log("You can hide the xAxis by adding -- 'xAxis': false -- to the options parameter");};
     if (!options.ticks){options.ticks=defaultOptions.ticks; console.log("You can set the approximate number of ticks in the axis by adding 'ticks':5")};
+    if (!options.colorScale){options.colorScale=defaultOptions.colorScale; console.log("You can set the colorScale")};
+    if (!options.donutHole){options.donutHole=defaultOptions.donutHole;};
   }else{
     options = typeof options !== 'undefined' ? options : defaultOptions;
     console.log("No option parameters set, so we'll just use the default settings :)")
@@ -68,6 +89,7 @@ function createChart(type, sourceTable, targetChart, graphingVariable, label, op
     $(sourceTable).css({'position':'absolute','left':'-9999px'}); //preferable to 'display':'none' because it's still readable by screen readers.
   }
 
+
   //set the variables — some of these seem redundant and arbitrary
   var margin = {top: 20, left: 10, bottom: 10, right: 30}
     , width = parseInt(d3.select(targetChart).style('width'))
@@ -75,17 +97,21 @@ function createChart(type, sourceTable, targetChart, graphingVariable, label, op
     , height = options.height
     , barPadding = 10
     , padding = options.padding
-    , paddingLeftLabels = options.paddingLabels //arbitrary
-    , setResize = false;
+    , paddingLeftLabels = 0
+    , setResize = false
+    , label = options.labels
+    , donutHole= (height/2) - options.donutHole;
+
+if(options.labels!=""){paddingLeftLabels = options.paddingLabels};
 
 if (type=='bar'){
   height=tableJSON.length*options.barHeight;
   console.log('Automatically setting the height to '+height+" pixels (because of the amount of data).");
 }
 
-//The old JSON was saving numbers as strings. Needed to convert them to strings.
-//console.log("Max value: "+ d3.max(tableJSON, function(d){return d[graphingVariable]}));//parseFloat(d.r) ??
-//console.log("Max value: "+ d3.max(tableJSON, function(d){return parseFloat( d[graphingVariable] )})  );//parseFloat(d.r) ??
+if (type=='pie'){
+  donutHole=height/2;
+}
 
 
   //CREATE THE DIFFERENT X- and Y-SCALES --------------------------------------------------------
@@ -128,7 +154,7 @@ if (type=='bar'){
     }
   }
 
-
+  
 
   //CREATE THE SVG-------------------------------------------------------
   var newSVG = d3.select(targetChart).append('svg')
@@ -139,10 +165,12 @@ if (type=='bar'){
     .attr('transform', 'translate(' + [margin.left, margin.top] + ')');
 
   //Add the <g>groups for the bars
-  var g = newSVG.selectAll('g')
-    .data(tableJSON)
-    .enter()
-    .append('g')
+  if(type=='bar'||type=='column'){
+    var g = newSVG.selectAll('g')
+      .data(tableJSON)
+      .enter()
+      .append('g')
+  }
 
 
   var hoverColor=function(){d3.select(this).style("fill-opacity", .8);}
@@ -155,72 +183,80 @@ if (type=='bar'){
   
 
   //Donut chart ----------------------------------------------------------------
-  function donut(){
+  function donutChart(){
+    //create a key? position key responsively?
+    //make the text visible on value labels
+    //add onclick so that you can find the data via on click.
+
     //http://jsfiddle.net/gregfedorov/Qh9X5/9/
-    var dataset = {
-      apples: [53245, 28479, 19697, 24037, 40245],
-    };
-    //dataset=tableJSON.Miles
-
-    var radius = Math.min(width, height) / 2;
-    var color = d3.scale.category20();
-
-    var pie = d3.layout.pie()
-      .sort(null);
-
-    var arc = d3.svg.arc()
-        .innerRadius(radius - 100)
-        .outerRadius(radius - 50);
-
-
-    newSVG.append("g")
-        .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
-
-    var path = newSVG.selectAll("path")
-      .data(pie(dataset.apples))//.data(pie(tableJSON.Miles)) 
-      .enter().append("path")
-      .attr("fill", function(d, i) { return color(i); })
-      .attr("d", arc);
-    /*
-
+    //var color=d3.scale.category10();
     var color = d3.scale.ordinal()
-        .range(["#98abc5", "#8a89a6", "#7b6888", "#6b486b", "#a05d56", "#d0743c", "#ff8c00"]);
-
-    var arc = d3.svg.arc()
-        .outerRadius(radius - 10)
-        .innerRadius(radius - 70);
-
-    var pie = d3.layout.pie()
-        .sort(null)
-        .value(function(d) { return d.population; });
-
-    newSVG.append("g").attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
-
-
-    tableJSON.forEach(function(d) {
-      d.Miles = +d.Miles;
-      console.log(d.Miles);
-    });
-
-    var gPie = newSVG.selectAll(".arc")
-        .data(pie(tableJSON))
-      .enter().append("g")
-        .attr("class", "arc");
-
-    gPie.append("path")
-        .attr("d", arc)
-        .style("fill", function(d) { return color(d.data.age); });
-
-    */
-
-
-      console.log('Time to make the donuts.');
+      .range(options.colorScale);
+/*
+    //There's a simpler way to get the data in here.
+    var dataset = {
+      myData: [53245, 28479, 19697, 24037, 40245],
+    };
+    var myArray=[]
+    for (i=0;i<tableJSON.length;i++){
+      myArray[i]=tableJSON[i].Miles
     }
+    dataset.myData=myArray;
+
+*/
+
+    //Center the pieChart
+    newSVG.attr("transform", "translate(" + ((width / 2)-padding*3) + "," + 0 + ")");
+
+    //From interactive data viz book and http://bl.ocks.org/Guerino1/2295263
+
+    var outerRadius=height/2;
+    var innerRadius=0;
+    var arc=d3.svg.arc()
+      .innerRadius(innerRadius)
+      .outerRadius(outerRadius)
+
+    newSVG.data([tableJSON])
+
+    var pie=d3.layout.pie()
+      .sort(null)//make this an optional parameter?
+      .value(function(d) { return d.Miles; })
+
+
+    var arcs=newSVG.selectAll('g.arc')
+      .data(pie)  
+      .enter()
+      .append('g')
+      .classed('arc',true)
+      .attr('transform','translate('+outerRadius+", "+outerRadius+")");
+
+
+    arcs.append('path')
+      .attr('fill', function (d,i){return color(i)})
+      .attr('d', arc)
+      .attr("id", function(d, i) { return "arc"+i; })
+      .on("mouseover", hoverColor)
+      .on("mouseout", offColor)
+      .on("mousedown", function(d, i){console.log(tableJSON[i].Sport+' players run '+d.value+' miles per game.');})
+      .each(function(d) {
+          if(!setResize){
+            d3.select(window).on('resize', resize);
+            setResize=true;//This is a hacked solution to waiting until the chart has been created before calling the resize function. Might be better on the newSVG secgtion.
+            //http://stackoverflow.com/questions/7169370/d3-js-and-document-onready
+          }
+        });
+
+    arcs.append('text')
+      .attr('transform',function(d){return "translate("+arc.centroid(d)+")";})
+      .attr('text-anchor','middle')
+      .text(function(d){return d.value;})
+      .classed('barvalues',true)
+  }
 
 
 
   //Horizontal bar chart--------------------------------------------------------
-  function horizontalBars(){
+  function barChart(){
     xScale.range([paddingLeftLabels,width-padding]);
 
     g.append("rect")
@@ -239,12 +275,13 @@ if (type=='bar'){
         });
     
     //Add the labels
-    g.append('text')
-      .text(function(d){return d[label]})
-      .attr('x',0)
-      .attr('y',function(d,i){return i*(height/tableJSON.length)+.5*(height / tableJSON.length)+padding})
-      .classed('barlabels', true);    
-
+    if(options.labels!=""){
+      g.append('text')
+        .text(function(d){return d[label]})
+        .attr('x',0)
+        .attr('y',function(d,i){return i*(height/tableJSON.length)+.5*(height / tableJSON.length)+padding})
+        .classed('barlabels', true);    
+    }
     //Add the values
     g.append('text')
       .text(function(d){return d[graphingVariable]})
@@ -260,8 +297,8 @@ if (type=='bar'){
 
 
 
-  //Vertical column bar chart--------------------------------------------------------
-  function verticalBars(){
+  //Vertical column chart--------------------------------------------------------
+  function columnChart(){
     g.append("rect")
       .attr('width',width / tableJSON.length - barPadding)/*Makes the bar widths scale based on the number of bars */
       .attr('height',function(d){return height-yScale(d[graphingVariable]);})/*height scaled based on yScale */
@@ -279,6 +316,16 @@ if (type=='bar'){
           }
         });
 
+    //add the labels
+    if(options.labels!=""){
+      g.append('text')
+          .text(function(d){return d[label]})
+          .attr('x',function (d, i){return i * (width/tableJSON.length)+(width/tableJSON.length-barPadding)/2+padding;})//Center the labels
+          .attr('y',height+20)
+          .attr('text-anchor','middle')
+          .classed('barlabels', true)
+    }
+
     //Add the values
     g.append('text')
       .text(function(d){return d[graphingVariable] + ' '/*+graphingVariable*/})
@@ -286,14 +333,6 @@ if (type=='bar'){
       .attr('y',function (d){return yScale(d[graphingVariable])-5})
       .attr('text-anchor','middle')
       .classed('barvalues', true);
-
-    //add the labels
-    g.append('text')
-        .text(function(d){return d[label]})
-        .attr('x',function (d, i){return i * (width/tableJSON.length)+(width/tableJSON.length-barPadding)/2+padding;})//Center the labels
-        .attr('y',height+20)
-        .attr('text-anchor','middle')
-        .classed('barlabels', true)
 
     //Superfluous animation
     function animate(){
@@ -340,17 +379,17 @@ if (type=='bar'){
     d3.select(newSVG.node().parentNode)
       .style('width', (width + margin.left + margin.right) + 'px');
 
-    newSVG.selectAll('rect')
-      .attr('width',rectW)
-      .attr('x',rectXpos)
-      
-    newSVG.selectAll('.barlabels')
-      .attr('x',barLabelsX)//Center the labels
-    newSVG.selectAll('.barvalues')
-      .attr('x',barValuesX)//Center the labels
-
-    //I'll need to adjust the xAxis for horizontal charts
-    //http://eyeseast.github.io/visible-data/2013/08/28/responsive-charts-with-d3/
+    if (type=='column' || type=='bar'){
+      newSVG.selectAll('rect')
+        .attr('width',rectW)
+        .attr('x',rectXpos)
+        
+      newSVG.selectAll('.barlabels')
+        .attr('x',barLabelsX)//Center the labels
+      newSVG.selectAll('.barvalues')
+        .attr('x',barValuesX)//Center the labels
+    }
+    //Adjust the xAxis for horizontal bar charts
     if(type=='bar'&&options.xAxis){
       width = parseInt(d3.select(targetChart).style('width'))
       width = width - margin.left - margin.right
@@ -358,15 +397,23 @@ if (type=='bar'){
       xScale.range([paddingLeftLabels,width-padding]);
       d3.select(targetChart).select('g').call(xAxis.orient('bottom'));
     }
+    //Recenter pie or donut charts
+    if(type=='donut' || type=='pie'){
+      newSVG.attr("transform", "translate(" + ((width / 2)-padding*3) + "," + 0 + ")");
+    }
   }
 
   //Create the graph depending on what type of chart is set in the options--------------------------------------------------------
   if (type=="column"){
-    verticalBars()
+    columnChart()
   } else if (type=="bar"){
-    horizontalBars()
+    barChart()
   } else if(type=="donut"){
-    donut();
+    donutChart();
+    console.log('Time to make the donuts.');
+  } else if(type=="pie"){
+    donutChart();
+    console.log('Mmmmm... pie.');
   } else {
     console.log("Sorry, we don't currently support "+type+" charts.")
   };
@@ -374,9 +421,13 @@ if (type=='bar'){
 
 /*
 Known issues:
-* limit label widths (or hide labels) below a certain point
+* Pie Chart values are lost in smaller wedges
 
 Things I fixed:
-* Moved the graph 'type' from the optional parameters to the required section
-*/
+* Moved the 'labels' from the required parameters to the optional section.
+* Renamed chart functions to make them parallel with chart types.
+* Added support for donut and pie charts
+* Add a colorScale optional parameter (for pie charts and...?)
+* Added unique IDs for pie/donut arcs so that they can be styled by CSS.
 
+*/

@@ -23,9 +23,9 @@ Here's a [horizontal bar chart](http://54.243.239.169/brian/storytelling/tableTo
 
 ## Next steps
 Bugs, features and optimizations:
+* The resize function doesn't work for multiple charts on the page.
 * Add support for [Grouped bar charts](http://bl.ocks.org/mbostock/3887051)
 * Add support for scatter plots.
-* At the moment the resize function doesn't work for multiple charts on the page.
 * I'm using jQuery to create the JSON but I'm pretty sure you can do this with just D3.
 * limit label widths (or hide labels) below a certain point.
 * Do we want to be able to call createChart on multiple charts by targeting all &lt;table class'chartThis'&gt;...&lt;/table&gt;?

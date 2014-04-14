@@ -3,7 +3,7 @@ table-to-svg
 
 Converts an HTML table to JSON that is rendered as a responsive D3 SVG chart.
 
-The idea here is that if your phone doesn't support SVG/JavaScript you still have access to the data in a light, accessible form. The idea for this came from Filament Group's book on [progressive enhancements](http://filamentgroup.com/dwpe/)
+The idea here is that if your phone doesn't support SVG/JavaScript you still have access to the data in a light, accessible form. The idea for this came from this book on [progressive enhancements](http://filamentgroup.com/dwpe/) and this article from [A List Apart](http://alistapart.com/article/svg-with-a-little-help-from-raphael#section5)
 
 ## Creating the chart
 Here's the function to create the chart:
@@ -25,8 +25,14 @@ Here's a [horizontal bar chart](http://54.243.239.169/brian/storytelling/tableTo
 Bugs, features and optimizations:
 * Add support for [Grouped bar charts](http://bl.ocks.org/mbostock/3887051)
 * Add support for scatter plots.
-* Add some media query styling for the charts
 * At the moment the resize function doesn't work for multiple charts on the page.
 * I'm using jQuery to create the JSON but I'm pretty sure you can do this with just D3.
 * limit label widths (or hide labels) below a certain point.
-* Do we want to be able to call createChart on multiple charts by targeting all <table class'chartThis'>...</table>?
+* Do we want to be able to call createChart on multiple charts by targeting all &lt;table class'chartThis'&gt;...&lt;/table&gt;?
+* Pie Chart values are lost in smaller wedges
+* add onclick so that you can find the data via on click.
+* Dollar and percentage values in tables (prefix/suffix?)
+* Axis label options
+* Should the bar charts be created (or have the option) of being created with just HTML/divs?
+* create a key? position key responsively?
+* supporting negative numbers on bar charts

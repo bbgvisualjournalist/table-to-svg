@@ -7,7 +7,7 @@ The idea here is that if your phone doesn't support SVG/JavaScript you still hav
 
 ## Creating the chart
 Here's the function to create the chart:
-createChart('typeOfChart', '#sourceTable', "#targetDiv", "dataColumn");
+createChart('typeOfChart', '#sourceTable', "dataColumn", {optional parameters});
 
 You can also add optional parameters like
 createChart('bar', '#runningTable', "#chart", "Miles", {"labels":"Sport", "showTable": true, "barHeight":50, "ticks":4, "xAxis": true, "paddingLabels":100});

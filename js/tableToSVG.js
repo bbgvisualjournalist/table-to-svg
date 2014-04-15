@@ -44,15 +44,30 @@ function createChart(type, sourceTable, targetChart, graphingVariable, options){
   //CREATE THE JSON FROM THE TABLE --------------------------------------------------------
   var tableJSON= createJSON(sourceTable);
   console.log(tableJSON);
-  //console.log(tableJSON[0].Miles);
 
 
 
 
   //DEFINE THE VARIABLES --------------------------------------------------------
 
+
   //Check and set the options
-  var defaultOptions={"labels":"", "height":200, "showTable":true, "barHeight": 30, "padding": 15, "paddingLabels": 80, "ticks": 4, "xAxis":true, "colorScale":["#000", "#333", "#666", "#999"], "donutHole": 55};
+  var defaultOptions={"labels":""
+    , "height":200
+    , "showTable":true
+    , "barHeight": 30
+    , "padding": 15
+    , "paddingLabels": 80
+    , "ticks": 4
+    , "xAxis":true
+    , "colorScale": ["#D4451D", "#FF6C0C", "#FFB819", "#95D600"]
+    , "donutHole": 55
+    , "decimalPlaces": ""
+    , "addComma": false
+    , "prefix": ""
+    , "suffix": ""
+    , "clicked": ""
+  };
   if (options){
     if (! options.labels ) {options.labels=defaultOptions.labels};
     if (! options.height ) {options.height=defaultOptions.height; console.log("You can set the height of the chart by adding -- 'height': #### -- to the options parameter")};
@@ -64,13 +79,32 @@ function createChart(type, sourceTable, targetChart, graphingVariable, options){
     if (! options.ticks ) {options.ticks=defaultOptions.ticks; console.log("You can set the approximate number of ticks in the axis by adding 'ticks':5")};
     if (! options.colorScale ) {options.colorScale=defaultOptions.colorScale; console.log("You can set the colorScale")};
     if (! options.donutHole ) {options.donutHole=defaultOptions.donutHole;};
+
+    if (! options.decimalPlaces ) {options.decimalPlaces=defaultOptions.decimalPlaces;};
+    if (typeof options.addComma === 'undefined' ) {console.log('you can add commas to numbers.'); options.addComma=defaultOptions.addComma;};
+    if (! options.prefix ) {options.prefix=defaultOptions.prefix;};
+    if (! options.suffix ) {options.suffix=defaultOptions.suffix;};
+
+    if (! options.clicked ) {options.clicked=defaultOptions.clicked;};
+
+
   }else{
     options = typeof options !== 'undefined' ? options : defaultOptions;
     console.log("No option parameters set, so we'll just use the default settings :)")
   }
+
   if(!options.showTable){
     $(sourceTable).css({'position':'absolute','left':'-9999px'}); //preferable to 'display':'none' because it's still readable by screen readers.
   }
+
+/*
+  var oldTable=d3.select(sourceTable)
+    .insert('div', sourceTable)
+    .classed('dogs', true);
+  console.log(oldTable);*/
+/*
+  $( "h3" ).append( $( '#runningTable' ) );
+console.log('dog')*/
 
 
   //set the variables — some of these seem redundant and arbitrary
@@ -85,24 +119,56 @@ function createChart(type, sourceTable, targetChart, graphingVariable, options){
     , label = options.labels
     , donutHole= options.donutHole;
 
-if(options.labels!=""){paddingLeftLabels = options.paddingLabels};
+  if(options.labels!=""){paddingLeftLabels = options.paddingLabels};
 
-if (type=='bar'){
-  height=tableJSON.length*options.barHeight;
-  console.log('Automatically setting the height to '+height+" pixels (because of the amount of data).");
-}
+  if (type=='bar'){
+    height=tableJSON.length*options.barHeight;
+    console.log('Automatically setting the height to '+height+" pixels (because of the amount of data).");
+  }
 
-if (type=='pie'){
-  donutHole=0;
-}
+  if (type=='pie'){
+    donutHole=0;
+  }
+
+
+
+
+
+  //Reformat the numbers --------------------------------------------------------
+  var reformatTheNumber = false
+    , decimalPlaces = options.decimalPlaces
+    , addComma=options.addComma
+    , addCommaSeparator=""
+    , prefix=options.prefix
+    , suffix=options.suffix;
+
+  //£ € $ % 
+  console.log("addComma"+ addComma);
+
+  if (decimalPlaces>=0 || prefix!="" || suffix!="" || addComma){ reformatTheNumber=true;}
+
+  if (decimalPlaces=="none"){
+    formatDecimals= function (originalNumber){return originalNumber};
+  } else if (decimalPlaces>=0){ 
+    if (addComma){addCommaSeparator=","}
+    var styleNumber=addCommaSeparator+"."+decimalPlaces+"f";
+    formatDecimals= d3.format(styleNumber);
+  }
+  if (reformatTheNumber){
+    formatNumber = function(originalNumber) {return prefix + formatDecimals(originalNumber) + suffix; }; //currencies
+  }else {
+    formatNumber=function (originalNumber){return originalNumber}
+  } 
+
 
 
   //CREATE THE DIFFERENT X- and Y-SCALES --------------------------------------------------------
 
   //Create the yScale
   var yScale=d3.scale.linear()
-    .domain([0,d3.max(tableJSON, function(d){return d[graphingVariable]})])
+    .domain( [0,d3.max(tableJSON, function(d){ return d[graphingVariable] } ) ] )
     .range([height,0]);
+
 
   var yAxis=d3.svg.axis()
   	.scale(yScale)
@@ -111,7 +177,7 @@ if (type=='pie'){
 
   //Create the xScale
   var xScale=d3.scale.linear()
-    .domain([0,d3.max(tableJSON, function(d){return d[graphingVariable]})])
+    .domain([0,d3.max(tableJSON, function(d){ return d[graphingVariable] } ) ] )
     .range([0,width]);
 
   var xAxis=d3.svg.axis()
@@ -121,55 +187,95 @@ if (type=='pie'){
 
 
 
+
   //Adding the y-axis
   function addYaxis(){
-    newSVG.append('g')
+    viz.append('g')
     .attr('class', 'axis')
     .attr('transform','translate('+padding+',0)')
     .call(yAxis);
   }
   function addXaxis(){
     if (options.xAxis){
-      newSVG.append('g')
+      viz.append('g')
       .attr('class', 'axis')
       .attr('transform', 'translate(0,' + height + ')')//moves the axis to the bottom of the graphic
       .call(xAxis);
     }
   }
 
+
   
 
   //CREATE THE SVG-------------------------------------------------------
-  var newSVG = d3.select(targetChart).append('svg')
+  var viz = d3.select(targetChart).append('svg')
     .attr("id", label)
     .style('width', (width + margin.left + margin.right) + 'px')
-    .style('height',height+margin.top+margin.bottom+padding)
+    .style('height', height + margin.top + margin.bottom + padding)
     .append('g')
     .attr('transform', 'translate(' + [margin.left, margin.top] + ')');
 
   //Add the <g>groups for the bars
-  if(type=='bar'||type=='column'){
-    var g = newSVG.selectAll('g')
+  if ( type == 'bar' || type == 'column' || type== 'scatterplot'){
+    var g = viz.selectAll('g')
       .data(tableJSON)
       .enter()
       .append('g')
   }
 
 
+
   var hoverColor=function(){d3.select(this).style("fill-opacity", .8);}
   var offColor=function(){d3.select(this).style("fill-opacity", 1);}
-  //var hoverColor=function(){d3.select(this).style("fill", "#C00");}
-  //var offColor=function(){d3.select(this).style("fill", "#900");}
+
 
 
   //DEFINE THE DIFFERENT TYPES OF CHARTS--------------------------------------------------------
   
 
+  //Scatterplot chart ---------------------------------------------------------
+  function scatterplotChart(){
+    yScale.domain([0,d3.max(tableJSON, function(d){return d[graphingVariable[0]]})])
+    
+    var radiusScale=d3.scale.linear()
+      .domain([0,d3.max(tableJSON, function(d){return d[graphingVariable[1]]})])
+      .range([0,30]);
+
+
+    g.append("circle")
+      .attr('r',function (d, i){console.log(d[graphingVariable[0]]+" :: "+d[graphingVariable[1]]);return radiusScale(d[graphingVariable[1]])})
+      .attr('cx',function(d,i){return i*(width/tableJSON.length)+padding; /*Number of bars spaced evenly across the width of the SVG */})
+      .attr('cy',function(d){console.log("yVariable: "+ d[graphingVariable[0]]); return yScale(d[graphingVariable[0]]);/*y position scaled based on the new yScale (solves for SVG positioning)*/})
+      .on("mouseover", hoverColor)
+      .on("mouseout", offColor)
+      //.on("mousedown", function(d, i){console.log(tableJSON[i].Sport+' players run '+d[graphingVariable[0]]+' miles per game.');})
+
+    //optional function that exposes the data 
+    var myCircles=d3.selectAll('circle')
+    if(options.clicked!=""){
+      myCircles.on("mousedown", eval(options.clicked))
+    }else{
+      //Default click event
+    }
+
+
+    if(options.labels!=""){
+      g.append('text')
+        .text(function(d){return d[graphingVariable[1]]})
+        .attr('x',function (d, i){return i * (width/tableJSON.length)+(width/tableJSON.length-barPadding)/2+padding;})//Center the labels
+        .attr('y',height+20)
+        .attr('text-anchor','middle')
+        //.classed('barlabels', true)
+    }
+
+    addYaxis();
+    addXaxis();
+  }
+
+
+
   //Donut chart ----------------------------------------------------------------
   function donutChart(){
-    //create a key? position key responsively?
-    //make the text visible on value labels
-    //add onclick so that you can find the data via on click.
     //From interactive data viz book and http://bl.ocks.org/Guerino1/2295263
     //http://jsfiddle.net/gregfedorov/Qh9X5/9/
 
@@ -178,7 +284,8 @@ if (type=='pie'){
       .range(options.colorScale);
 
     //Center the pieChart
-    newSVG.attr("transform", "translate(" + ((width / 2)-padding*3) + "," + 0 + ")");
+    //viz.attr("transform", "translate(" + ((width / 2)-((height-padding)/2)) + "," + 0 + ")");
+    viz.attr("transform", "translate(" + ( ( (width / 2) - (height / 2) )+padding) + "," + 0 + ")");
 
 
     var outerRadius=height/2;
@@ -187,38 +294,49 @@ if (type=='pie'){
       .innerRadius(innerRadius)
       .outerRadius(outerRadius)
 
-    newSVG.data([tableJSON])
+    viz.data([tableJSON])
 
     var pie=d3.layout.pie()
       .sort(null)//make this an optional parameter?
       .value(function(d) { return d[graphingVariable]; })
 
 
-    var arcs=newSVG.selectAll('g.arc')
+    var arcs=viz.selectAll('g.arc')
       .data(pie)  
       .enter()
       .append('g')
+      .on("mouseover", hoverColor)
+      .on("mouseout", offColor)
       .classed('arc',true)
       .attr('transform','translate('+outerRadius+", "+outerRadius+")");
+      //.on("mousedown", function(d, i){console.log(tableJSON[i].Sport+' players run '+d.value+' miles per game.');})
+
+
+    //optional click event that exposes the data
+    if(options.clicked!=""){      
+      arcs.on("mousedown", eval(options.clicked))
+    } else{
+      arcs.on("mousedown", function(d, i){console.log(tableJSON[i].Sport+' players run '+d.value+' miles per game.');})
+    }
 
 
     arcs.append('path')
       .attr('fill', function (d,i){return color(i)})
       .attr('d', arc)
       .attr("id", function(d, i) { return "arc"+i; })
-      .on("mouseover", hoverColor)
-      .on("mouseout", offColor)
-      .on("mousedown", function(d, i){console.log(tableJSON[i].Sport+' players run '+d.value+' miles per game.');})
       .each(function(d) {
           if(!setResize){
             d3.select(window).on('resize', resize);
-            setResize=true;//This is a hacked solution to waiting until the chart has been created before calling the resize function. Might be better on the newSVG secgtion.
+            setResize=true;//This is a hacked solution to waiting until the chart has been created before calling the resize function. Might be better on the viz secgtion.
             //http://stackoverflow.com/questions/7169370/d3-js-and-document-onready
           }
-        });
+        })
 
-      //Hardcoded for 'Sport'      .on("mousedown", function(d, i){console.log(d.label+' players run '+d.value+' miles per game.');})
-
+    if(options.labels!=""){
+      arcs.append('title')
+        .text(function(d, i){return prefix + d.value + suffix});
+        //.text(function(d, i){return tableJSON[i][options.labels] + prefix +d.value+suffix});
+    }
 
     arcs.append('text')
       .attr('transform',function(d){return "translate("+arc.centroid(d)+")";})
@@ -244,10 +362,37 @@ if (type=='pie'){
       .each(function(d) {
           if(!setResize){
             d3.select(window).on('resize', resize);
-            setResize=true;//This is a hacked solution to waiting until the chart has been created before calling the resize function. Might be better on the newSVG secgtion.
+            setResize=true;//This is a hacked solution to waiting until the chart has been created before calling the resize function. Might be better on the viz secgtion.
           }
-        });
-    
+        })
+      .append('title')
+      .text(function(d, i){return formatNumber(d[graphingVariable])});
+
+
+    //optional function that exposes the data 
+    var myRect=d3.selectAll('rect')
+    if(options.clicked!=""){
+      myRect.on("mousedown", eval(options.clicked))
+    }else{
+      //Default click event
+    }
+
+
+
+    /*
+    //Adding an animation for the build 
+    //for some reason it isn't respecting the delay(i)
+    g.selectAll('rect')
+    .transition()
+    .delay(function(d, i) {
+      console.log(i)
+        return i * 100;
+    })
+    .duration(500)
+    .attr('width',function(d){return xScale(d[graphingVariable]) - paddingLeftLabels;});
+    //.each("end", functionToAddLabels);  
+    */
+
     //Add the labels
     if(options.labels!=""){
       g.append('text')
@@ -256,9 +401,11 @@ if (type=='pie'){
         .attr('y',function(d,i){return i*(height/tableJSON.length)+.5*(height / tableJSON.length)+padding})
         .classed('barlabels', true);    
     }
+
+
     //Add the values
     g.append('text')
-      .text(function(d){return d[graphingVariable]})
+      .text(function(d){console.log(d[graphingVariable]); return formatNumber(d[graphingVariable])})
       .attr('x',function(d){return xScale(d[graphingVariable])+5;})
       .attr('y',function(d,i){return i*(height/tableJSON.length)+.5*(height / tableJSON.length)+padding})
       .classed('barvalues', true);
@@ -281,19 +428,32 @@ if (type=='pie'){
       .classed('bar',true)
       .on("mouseover", hoverColor)
       .on("mouseout", offColor)
-      .on("mousedown", animate)
+      //.on("mousedown", animate)
       .each(function(d) {
           if(!setResize){
             d3.select(window).on('resize', resize);
-            setResize=true;//This is a hacked solution to waiting until the chart has been created before calling the resize function. Might be better on the newSVG secgtion.
+            setResize=true;//This is a hacked solution to waiting until the chart has been created before calling the resize function. Might be better on the viz secgtion.
             //http://stackoverflow.com/questions/7169370/d3-js-and-document-onready
+
           }
-        });
+        })
+      .append('title')
+      .text(function(d, i){return formatNumber(d[graphingVariable])});
+
+    //optional function that exposes the data 
+    var myRect=d3.selectAll('rect')
+    if(options.clicked!=""){
+      myRect.on("mousedown", eval(options.clicked))
+    }else{
+      //Default click event
+      myRect.on("mousedown", animate)
+    }
+
 
     //add the labels
     if(options.labels!=""){
       g.append('text')
-          .text(function(d){return d[label]})
+          .text(function(d){return d[label] })
           .attr('x',function (d, i){return i * (width/tableJSON.length)+(width/tableJSON.length-barPadding)/2+padding;})//Center the labels
           .attr('y',height+20)
           .attr('text-anchor','middle')
@@ -302,7 +462,7 @@ if (type=='pie'){
 
     //Add the values
     g.append('text')
-      .text(function(d){return d[graphingVariable] + ' '/*+graphingVariable*/})
+      .text(function(d){return formatNumber( d[graphingVariable] ) })
       .attr('x',function (d, i){return i * (width/tableJSON.length)+(width/tableJSON.length-barPadding)/2+padding;})//Center the labels
       .attr('y',function (d){return yScale(d[graphingVariable])-5})
       .attr('text-anchor','middle')
@@ -326,6 +486,9 @@ if (type=='pie'){
     //Add the yAxis at the end
     addYaxis();
   }
+
+
+
   //Set the resizing options based on the type of chart-------------------------------
   var rectXpos, rectW, barLabelsX, barValuesX;
   if(type=='column'){
@@ -350,17 +513,17 @@ if (type=='pie'){
     width = parseInt(d3.select(targetChart).style('width'), 10);
     width = width - margin.left - margin.right;
 
-    d3.select(newSVG.node().parentNode)
+    d3.select(viz.node().parentNode)
       .style('width', (width + margin.left + margin.right) + 'px');
 
     if (type=='column' || type=='bar'){
-      newSVG.selectAll('rect')
+      viz.selectAll('rect')
         .attr('width',rectW)
         .attr('x',rectXpos)
         
-      newSVG.selectAll('.barlabels')
+      viz.selectAll('.barlabels')
         .attr('x',barLabelsX)//Center the labels
-      newSVG.selectAll('.barvalues')
+      viz.selectAll('.barvalues')
         .attr('x',barValuesX)//Center the labels
     }
     //Adjust the xAxis for horizontal bar charts
@@ -373,7 +536,7 @@ if (type=='pie'){
     }
     //Recenter pie or donut charts
     if(type=='donut' || type=='pie'){
-      newSVG.attr("transform", "translate(" + ((width / 2)-padding*3) + "," + 0 + ")");
+      viz.attr("transform", "translate(" + ( ( (width / 2) - (height / 2) )+padding) + "," + 0 + ")");
     }
   }
 
@@ -388,6 +551,9 @@ if (type=='pie'){
   } else if(type=="pie"){
     donutChart();
     console.log('Mmmmm... pie.');
+  } else if(type=='scatterplot'){
+    scatterplotChart();
+    console.log('scattered');
   } else {
     console.log("Sorry, we don't currently support "+type+" charts.")
   };
@@ -395,15 +561,19 @@ if (type=='pie'){
 
 /*
 Known issues:
+* Should the JSON conversion strip the commas and prefixes/suffixes out of the chart?
+* add onclick so that you can find the data via on click.
+* create a key? position key responsively?
 * Pie Chart values are lost in smaller wedges
-* Hardcoded sports as the label for the piechart click.
+* Axis label options
+* Should the bar charts be created (or have the option) of being created with just HTML/divs?
+* supporting negative numbers on bar charts.
+
+
 
 Things I fixed:
-* Moved the 'labels' from the required parameters to the optional section.
-* Renamed chart functions to make them parallel with chart types.
-* Added support for donut and pie charts
-* Add a colorScale optional parameter (for pie charts and...?)
-* Added unique IDs for pie/donut arcs so that they can be styled by CSS.
-
+* Added basic (pronounced: broken) support for scatterplots
+* Experimenting with an optional user-defined function for 'clicked'
+* Added number formatting for currency, percents, decimals and commas values in tables (prefix/suffix?).
 */
 

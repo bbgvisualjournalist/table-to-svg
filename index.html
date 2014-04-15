@@ -1,21 +1,56 @@
 <html>
 <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta http-equiv="content-type" content="text/html;charset=utf-8" />
 	<title>Converting a table to JSON to a responsive SVG</title>
 
 	<style type="text/css">
-		.barlabels, .barvalues, table{
-			font-family: arial, sans-serif;
-		}
+	body{font-family: arial, sans-serif;}
+	
+	table{width: 100%;}
+    td{border-top: 1px solid #CCC; text-align: center;}
+	.barlabels{font-weight: bold;}
+	.barvalues{fill:#333;}
+	g.arc text.barvalues{fill:#FFF;}
+	//#arc3{fill:#900;}
     .numbers{
-      text-align: right;
+      //text-align: right;
     }
-    .bar{fill:#900;}
-
+    .bar, circle{fill:#900;}
     .axis path,
-    .axis line {
-      fill: none;
-      stroke: #555;
+    .axis line {fill: none;stroke: #555;}
+    .code{font-family: courier, monospace; margin-bottom: 0; margin-top: 0}
+    .indent{
+    	text-indent: 5em;
     }
+    .graphic{
+    	width:50%;
+    	float:right;
+    	margin-left: 30px;
+    	margin-bottom: 20px
+    }
+    .graphic h3{
+    	margin-bottom: 0;
+    	padding-bottom: 0;
+    }
+    .chatter{
+    	font-size: .9em;
+    	margin-top: 0;
+    	padding-top:0;
+    }
+
+    g text{pointer-events:none;}
+   	@media screen and ( max-width: 600px ) {
+		//.barlabels {display: none;/*-webkit-transform: rotate(-90deg);*/ }
+		.barlabels {font-size: .8em;/*-webkit-transform: rotate(-90deg);*/ }
+	    .graphic{
+	    	width:100%;
+	    	float:none;
+	    	margin: 0;
+	    }
+	}
+	//#arc2{fill:#900;}/*you can add CSS for individual arcs*/
+
 	</style>
 </head>
 <body>
@@ -31,20 +66,59 @@
 		<tr><td>Soccer</td><td class='numbers'>9.50</td></tr>
 	</tbody>
 </table>
+<br/>
 
-<div id='chart'></div>
+<br/><br/>
+<div id='chart' class='graphic'><h3>Creating a responsive SVG chart</h3><p class='chatter'>This chart was created directly from the HTML table data above. You can style the chart using CSS</div>
+<div id='chart2'></div>
+<br/>
+<div>
+<h2>Table-to-SVG</h2>
+<p>This JavaScript converts an HTML table to JSON that is rendered as a responsive D3 SVG chart. The idea here is that if your phone doesn't support SVG/JavaScript you still have access to the data in a light, accessible form.</p>
 
+<p>Here's the basic method to create a chart:</p>
 
+<p class='code'>createChart('typeOfChart', '#sourceTable', "#targetDiv", "dataColumn",{optionalParameters});</p>
 
+<p>The optional object at the end allows you to customize the look of the graphic:</p>
 
+<p class='code'>createChart('bar', '#runningTable', "Miles",</p>
+<p class='code indent'>{ "labels":"Sport"</p>
+<p class='code indent'>, "targetDiv": "optionalChartLocation"</p>
+<p class='code indent'>, "showTable": true</p>
+<p class='code indent'>, "barHeight":50</p>
+<p class='code indent'>, "ticks":4</p>
+<p class='code indent'>, "xAxis": true</p>
+<p class='code indent'>, "paddingLabels":100});</p>
 
+<p><strong>The function parameters are:</strong></p>
+<ul>
+	<li>Type of chart ('bar', 'column, 'pie', 'donut')</li>
+	<li>The #id for the source table </li>
+	<li>The table column you want to graph</li>
+	<li>An object with optional parameters for 'height', 'showTable' (Do you want to show(true) or hide(false) the old chart), 'barHeight' for horizontal bar charts, 'ticks' which determines the approximate number of ticks on the axis, 'xAxis' do you want to show (true) or hide (false), and 'paddingLabels' to adjust where the horizontal bars start based on the bar labels. ...labels, colorScale, donutHole</li>
+</ul>
+</div>
 	<script type="text/javascript" src="js/jquery.min.js"></script>
 	<script type="text/javascript" src="js/d3.min.js"></script>
 	<script type="text/javascript" src="js/tableToSVG.js"></script>
+
 	<script type="text/javascript">
-	$( document ).ready(function() {
-	    createChart('column', '#runningTable', "#chart", "Miles", "Sport", {"showTable": true, "height":200, "barHeight":50, "ticks":4, "xAxis": true, "paddingLabels":100});
-	    //createChart('#fruitTable', "#chart2", "Oranges", "Day", {"height":300, "type":"column", "showTable": false});
+	//user-defined function for onClick
+	var myFunctionBar = function (d, i){console.log("you clicked on function a###!!"+d.Miles+ " "+i+" "+d.Sport)}
+	var myFunctionScatterplot = function (d, i){console.log("you clicked on function a!!!"+d.Miles+ " "+i+" "+d.Sport)}
+	var myFunctionDonut = function(d, i){console.log('players run '+d.value+' miles per game!!!!!!');}
+
+	$(document).ready(function() {
+	    createChart('bar', '#runningTable', "Miles",
+	    	{ "labels":"Sport"
+	    	, "showTable": true
+	    	, "height":250
+	    	, "barHeight":5340
+	    	, "ticks":4
+	    	, "xAxis": true
+	    	, "clicked": "myFunctionBar"
+	    });
 	});
 	</script>
 </body>

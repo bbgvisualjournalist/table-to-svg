@@ -39,7 +39,7 @@ function isNumber(n) {
 
 
 /*Creating a D3 SVG chart*/
-function createChart(type, sourceTable, targetChart, graphingVariable, options){
+function createChart(type, sourceTable, graphingVariable, options){
 
   //CREATE THE JSON FROM THE TABLE --------------------------------------------------------
   var tableJSON= createJSON(sourceTable);
@@ -53,6 +53,7 @@ function createChart(type, sourceTable, targetChart, graphingVariable, options){
 
   //Check and set the options
   var defaultOptions={"labels":""
+    , "targetDiv":""
     , "height":200
     , "showTable":true
     , "barHeight": 30
@@ -70,6 +71,7 @@ function createChart(type, sourceTable, targetChart, graphingVariable, options){
   };
   if (options){
     if (! options.labels ) {options.labels=defaultOptions.labels};
+    if (! options.targetDiv ) {options.targetDiv=defaultOptions.targetDiv;};
     if (! options.height ) {options.height=defaultOptions.height; console.log("You can set the height of the chart by adding -- 'height': #### -- to the options parameter")};
     if (typeof options.showTable === 'undefined') {options.showTable = true;console.log("You can hide the original table by adding a value of -- 'showTable': false -- to the options parameter");};
     if (! options.barHeight ) {options.barHeight=defaultOptions.barHeight};
@@ -97,14 +99,24 @@ function createChart(type, sourceTable, targetChart, graphingVariable, options){
     $(sourceTable).css({'position':'absolute','left':'-9999px'}); //preferable to 'display':'none' because it's still readable by screen readers.
   }
 
-/*
-  var oldTable=d3.select(sourceTable)
-    .insert('div', sourceTable)
-    .classed('dogs', true);
-  console.log(oldTable);*/
-/*
-  $( "h3" ).append( $( '#runningTable' ) );
-console.log('dog')*/
+
+
+
+
+  //If no targetDiv is set in the options, insert the chart after the table.
+  var targetChart;
+  if (options.targetDiv==""){
+    console.log('targetDiv not set');
+    var chartID=type+'_chart_'+graphingVariable
+    targetChart='#'+chartID;
+    $( sourceTable ).after( "<div id='"+chartID+"' class='graphic'>this is chart</div>" );
+
+  }else{
+    targetChart=options.targetDiv
+  }
+
+
+
 
 
   //set the variables — some of these seem redundant and arbitrary
@@ -162,6 +174,26 @@ console.log('dog')*/
 
 
 
+
+  //CREATE THE SVG-------------------------------------------------------
+  var viz = d3.select(targetChart).append('svg')
+    .attr("id", label)
+    .style('width', (width + margin.left + margin.right) + 'px')
+    .style('height', height + margin.top + margin.bottom + padding)
+    .append('g')
+    .attr('transform', 'translate(' + [margin.left, margin.top] + ')');
+
+  //Add the <g>groups for the bars
+  if ( type == 'bar' || type == 'column' || type== 'scatterplot'){
+    var g = viz.selectAll('g')
+      .data(tableJSON)
+      .enter()
+      .append('g')
+  }
+
+
+
+
   //CREATE THE DIFFERENT X- and Y-SCALES --------------------------------------------------------
 
   //Create the yScale
@@ -187,6 +219,7 @@ console.log('dog')*/
 
 
 
+  //CREATE THE X- and Y-AXIS --------------------------------------------------------
 
   //Adding the y-axis
   function addYaxis(){
@@ -207,24 +240,10 @@ console.log('dog')*/
 
   
 
-  //CREATE THE SVG-------------------------------------------------------
-  var viz = d3.select(targetChart).append('svg')
-    .attr("id", label)
-    .style('width', (width + margin.left + margin.right) + 'px')
-    .style('height', height + margin.top + margin.bottom + padding)
-    .append('g')
-    .attr('transform', 'translate(' + [margin.left, margin.top] + ')');
-
-  //Add the <g>groups for the bars
-  if ( type == 'bar' || type == 'column' || type== 'scatterplot'){
-    var g = viz.selectAll('g')
-      .data(tableJSON)
-      .enter()
-      .append('g')
-  }
 
 
 
+  //basic hover functions
   var hoverColor=function(){d3.select(this).style("fill-opacity", .8);}
   var offColor=function(){d3.select(this).style("fill-opacity", 1);}
 
@@ -377,8 +396,6 @@ console.log('dog')*/
       //Default click event
     }
 
-
-
     /*
     //Adding an animation for the build 
     //for some reason it isn't respecting the delay(i)
@@ -392,6 +409,8 @@ console.log('dog')*/
     .attr('width',function(d){return xScale(d[graphingVariable]) - paddingLeftLabels;});
     //.each("end", functionToAddLabels);  
     */
+
+
 
     //Add the labels
     if(options.labels!=""){
@@ -561,6 +580,7 @@ console.log('dog')*/
 
 /*
 Known issues:
+* Multiple charts on a page don't resize.
 * Should the JSON conversion strip the commas and prefixes/suffixes out of the chart?
 * add onclick so that you can find the data via on click.
 * create a key? position key responsively?
@@ -572,6 +592,7 @@ Known issues:
 
 
 Things I fixed:
+* move the target div into the optional parameters. 
 * Added basic (pronounced: broken) support for scatterplots
 * Experimenting with an optional user-defined function for 'clicked'
 * Added number formatting for currency, percents, decimals and commas values in tables (prefix/suffix?).

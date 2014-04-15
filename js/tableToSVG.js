@@ -109,7 +109,7 @@ function createChart(type, sourceTable, graphingVariable, options){
     console.log('targetDiv not set');
     var chartID=type+'_chart_'+graphingVariable
     targetChart='#'+chartID;
-    $( sourceTable ).after( "<div id='"+chartID+"' class='graphic'>this is chart</div>" );
+    $( sourceTable ).after( "<div id='"+chartID+"' class='graphic'></div>" );
 
   }else{
     targetChart=options.targetDiv

@@ -1,0 +1,134 @@
+body{font-family: arial, sans-serif;max-width: 900px; margin:0 auto; padding: 0 10px;}
+
+table{width: 100%;}
+td{border-top: 1px solid #CCC; text-align: center;}
+
+
+.barlabels{font-weight: bold;}
+.barvalues{fill:#333;}
+g.arc text.barvalues{fill:#FFF;}
+//#arc3{fill:#900;}
+.numbers{
+  //text-align: right;
+}
+.bar, circle{fill:#900;}
+.axis path,
+.axis line {fill: none;stroke: #555;}
+
+
+.code{font-family: courier, monospace; margin-bottom: 0; margin-top: 0}
+.indent{
+	text-indent: 2em;
+}
+.comment{
+    color:#CCC;
+}
+.comment:hover{
+	color: #900;
+}
+
+
+.tableToSVG{
+	width:50%;
+	float:left;
+	margin-left: 30px;
+	margin-bottom: 20px	
+}
+.graphic{
+	width:40%;
+	float:right;
+	//width:100%;
+	padding-top: 0;
+	margin-left: 30px;
+	margin-bottom: 20px;
+	position: relative;
+}
+.graphic h3{
+	padding-top: 0;
+	margin-top: 0;
+
+	margin-bottom: 0;
+	padding-bottom: 0;
+}
+.chatter{
+	font-size: .9em;
+	margin-top: 0;
+	padding-top:0;
+}
+
+g text{pointer-events:none;} /*makes mouse events ignore text*/
+
+
+/*Setting up a legend. */
+.legend{
+	position: absolute;
+	width: 30%;
+	height: auto;
+	padding:10px;
+	background-color: #FFF;
+	right: 0;
+	top: 50px;
+	-webkit-box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.4);
+	-moz-box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.4);
+	box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.4);
+}
+
+.legend p{
+	margin: 0 0 7px 0;
+	padding: 0;
+	line-height: .8em;
+	font-size: .8em;
+	display: block;
+	width: 90%;
+}
+
+.keySwatch{
+	width: 10px;
+	height: 10px;
+	background-color: #900;
+	display: inline-block;
+}
+.keyText{
+	padding-left: 5px;
+}
+
+.key{
+	fill: #000;
+	font-size: .9em;
+}
+
+
+@media screen and ( max-width: 700px ) {
+	.barlabels {font-size: .8em;/*-webkit-transform: rotate(-90deg);*/ }
+    .tableToSVG{
+    	width:100%;
+    	float:none;
+    	margin: 0 0 40px 0;
+    }
+	.graphic{
+    	width:100%;
+    	float:none;
+    	margin: 0;
+	}
+    .comment{
+    	display:none;
+	}
+
+
+	.legend{
+		top: auto;
+		bottom: -20px;
+		right: 20%;
+	}
+	.legend{
+		//width: 200px;
+		width: 60%;
+	}
+	.legend p{
+		display: inline-block;
+		width: 50%;
+	}
+
+}
+//#arc2{fill:#900;}/*you can add CSS for individual arcs*/
+

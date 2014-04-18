@@ -4,53 +4,28 @@
     <meta http-equiv="content-type" content="text/html;charset=utf-8" />
 	<title>Converting a table to JSON to a responsive SVG</title>
 
+		<link rel="stylesheet" type="text/css" href="css/tableToSVG.css">
 	<style type="text/css">
-	body{font-family: arial, sans-serif;}
-	
-	table{width: 100%;}
-    td{border-top: 1px solid #CCC; text-align: center;}
-	.barlabels{font-weight: bold;}
-	.barvalues{fill:#333;}
-	g.arc text.barvalues{fill:#FFF;}
-	//#arc3{fill:#900;}
-    .numbers{
-      //text-align: right;
-    }
-    .bar, circle{fill:#900;}
-    .axis path,
-    .axis line {fill: none;stroke: #555;}
-    .code{font-family: courier, monospace; margin-bottom: 0; margin-top: 0}
-    .indent{
-    	text-indent: 5em;
-    }
-    .graphic{
-    	width:50%;
-    	float:right;
-    	margin-left: 30px;
-    	margin-bottom: 20px
-    }
-    .graphic h3{
-    	margin-bottom: 0;
-    	padding-bottom: 0;
-    }
-    .chatter{
-    	font-size: .9em;
-    	margin-top: 0;
-    	padding-top:0;
-    }
-
-    g text{pointer-events:none;}
-   	@media screen and ( max-width: 600px ) {
-		//.barlabels {display: none;/*-webkit-transform: rotate(-90deg);*/ }
-		.barlabels {font-size: .8em;/*-webkit-transform: rotate(-90deg);*/ }
-	    .graphic{
-	    	width:100%;
-	    	float:none;
-	    	margin: 0;
-	    }
-	}
-	//#arc2{fill:#900;}/*you can add CSS for individual arcs*/
-
+		#tooltip{
+			position: absolute;
+			width: 200px;
+			height: auto;
+			padding:10px;
+			background-color: #FFF;
+			-webkit-box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.4);
+			-moz-box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.4);
+			box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.4);
+		}
+		#tooltip.hidden{
+			display: none;
+		}
+		#tooltip p{
+			margin: 0;
+			font-size: 16px;
+			line-height: 20px;
+		}
+		@media screen and ( max-width: 700px ) {
+		}
 	</style>
 </head>
 <body>

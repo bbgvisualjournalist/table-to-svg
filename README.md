@@ -10,7 +10,7 @@ Here's the function to create the chart:
 createChart('typeOfChart', '#sourceTable', "dataColumn", {optional parameters});
 
 You can also add optional parameters like
-createChart('bar', '#runningTable', "Miles", {"labels":"Sport", "showTable": true, "barHeight":50, "ticks":4, "xAxis": true, "paddingLabels":100});
+createChart('bar', '#runningTable', "Miles", {"labels":"Sport", "showTable": true, "barHeight":50, "ticks":4, "xAxis": true});
 
 The function parameters are:
 * chart type ('bar', 'column', 'pie' or 'donut')

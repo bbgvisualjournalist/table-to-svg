@@ -4,7 +4,6 @@ var currentChartNumber=0;
 
 
 //Function loops through a table and returns JSON —— There's probably a way to do this with D3. :/ 
-//This is saving the numeric data as a string, which is messing up D3. We could use parseFloat(d.r) throughout but it'd be better to fix the JSON.
 function createJSON(tableName){
   var myRows = [];
   var headersText = [];
@@ -49,6 +48,8 @@ function rebuildCharts(){
   waitForFinalEvent(function(){
     for (i=0;i<chartArray.length;i++){
       d3.select(chartArray[i].options.svgID).remove();//Loop through and destroy the [i] chart (just the SVG)
+      var legendID=chartArray[i].options.targetDiv + " div.legend"
+      d3.select(legendID).remove();//Destroy the [i] chart div.legend
 
       var typeOfChart = chartArray[i].type
         , sourceTable = chartArray[i].sourceTable
@@ -77,7 +78,9 @@ var waitForFinalEvent = (function () {
 })();
 
 
-
+function chartHelp(){
+  console.log('createChart("typeOfChart", "#sourceTable", "dataColumn", \n{"labels":""\n, "targetDiv":""\n, "height":200\n, "showTable":false //Show (true) or hide (false) the source table\n, "barHeight": 30\n, "padding": 15\n, "ticks": 4 //Set the approximate number of ticks in the axis\n, "xAxis":true //Show (true) or hide (false) the xAxis.\n, "colorScale": ["#D4451D", "#FF6C0C", "#FFB819", "#95D600"] //You can set the color palette for pie charts. \n, "donutHole": 55\n, "decimalPlaces": "none"\n, "addComma": false //You can add commas to numbers.\n, "prefix": ""\n, "suffix": ""\n, "clicked": "" //You can add a custom onClick function by defining it like this: var myFunctionBar = function (d, i){console.log("This is a custom function. "+d.Sport+" players run "+d.Miles+ " "+i)}\n, "addLegend": false //You can add a legend.\n})')
+}
 
 
 //Creating a D3 SVG chart===================================================================================
@@ -88,7 +91,6 @@ function createChart(type, sourceTable, graphingVariable, options){
   console.log(tableJSON);
 
 
-
   //DEFINE THE VARIABLES --------------------------------------------------------
   //Check and set the options
   var defaultOptions={"labels":""
@@ -97,49 +99,45 @@ function createChart(type, sourceTable, graphingVariable, options){
     , "showTable":false
     , "barHeight": 30
     , "padding": 15
-    , "paddingLabels": 80
     , "ticks": 4
     , "xAxis":true
     , "colorScale": ["#D4451D", "#FF6C0C", "#FFB819", "#95D600"]
     , "donutHole": 55
-    , "decimalPlaces": ""
+    , "decimalPlaces": "none"
     , "addComma": false
     , "prefix": ""
     , "suffix": ""
     , "clicked": ""
     , "addLegend": false
   };
+
   if (options){
-    if (! options.labels ) {options.labels = defaultOptions.labels};
-    if (! options.targetDiv ) {options.targetDiv = defaultOptions.targetDiv;};
-    if (! options.height ) {options.height = defaultOptions.height; console.log("You can set the height of the chart by adding -- 'height': #### -- to the options parameter")};
-    if (typeof options.showTable === 'undefined') {options.showTable = true; console.log("You can hide the original table by adding a value of -- 'showTable': false -- to the options parameter");};
-    if (! options.barHeight ) {options.barHeight = defaultOptions.barHeight};
-    if (! options.padding ) {options.padding = defaultOptions.padding};
-    if (! options.paddingLabels ) {options.paddingLabels = defaultOptions.paddingLabels};
-    if (typeof options.xAxis === 'undefined' ) {options.xAxis = true; console.log("You can hide the xAxis by adding -- 'xAxis': false -- to the options parameter");};
-    if (! options.ticks ) {options.ticks=defaultOptions.ticks; console.log("You can set the approximate number of ticks in the axis by adding 'ticks':5")};
-    if (! options.colorScale ) {options.colorScale = defaultOptions.colorScale; console.log("You can set the colorScale")};
-    if (! options.donutHole ) {options.donutHole = defaultOptions.donutHole;};
-
-    if (! options.decimalPlaces ) {options.decimalPlaces=defaultOptions.decimalPlaces;};
-    if (typeof options.addComma === 'undefined' ) {console.log('you can add commas to numbers.'); options.addComma = defaultOptions.addComma};
-    if (! options.prefix ) {options.prefix=defaultOptions.prefix};
-    if (! options.suffix ) {options.suffix=defaultOptions.suffix};
-
-    if (! options.clicked ) {options.clicked = defaultOptions.clicked};
-    if (typeof options.addLegend === 'undefined' ) {console.log('you can add a legend.'); options.addLegend = defaultOptions.addLegend};
+    if (! options.labels ) {options.labels = defaultOptions.labels };
+    if (! options.targetDiv ) {options.targetDiv = defaultOptions.targetDiv };
+    if (! options.height ) {options.height = defaultOptions.height };
+    if (typeof options.showTable === 'undefined') {options.showTable = true };
+    if (! options.barHeight ) {options.barHeight = defaultOptions.barHeight };
+    if (! options.padding ) {options.padding = defaultOptions.padding };
+    if (typeof options.xAxis === 'undefined' ) { options.xAxis = true };
+    if (! options.ticks ) { options.ticks=defaultOptions.ticks };
+    if (! options.colorScale ) { options.colorScale = defaultOptions.colorScale };
+    if (! options.donutHole ) { options.donutHole = defaultOptions.donutHole };
+    if (typeof options.decimalPlaces === 'undefined' ) { options.decimalPlaces=defaultOptions.decimalPlaces };
+    if (typeof options.addComma === 'undefined' ) { options.addComma = defaultOptions.addComma };
+    if (! options.prefix ) { options.prefix=defaultOptions.prefix };
+    if (! options.suffix ) { options.suffix=defaultOptions.suffix };
+    if (! options.clicked ) { options.clicked = defaultOptions.clicked };
+    if (typeof options.addLegend === 'undefined' ) { options.addLegend = defaultOptions.addLegend };
 
 
   }else{
     options = typeof options !== 'undefined' ? options : defaultOptions;
-    console.log("No option parameters set, so we'll just use the default settings :)")
+    console.log("No option parameters set, so we'll just use the default settings. Type chartHelp() in the console for a list of the parameters.")
   }
 
   if (!options.showTable){
     $(sourceTable).css( {'position':'absolute','left':'-9999px'} ); //preferable to 'display':'none' because it's still readable by screen readers.
   }
-
 
 
   //If no targetDiv is set in the options, insert the chart after the table.
@@ -148,14 +146,12 @@ function createChart(type, sourceTable, graphingVariable, options){
     var chartID = type + '_chart_' + graphingVariable + currentChartNumber;
     targetChart = '#' + chartID;
     console.log('targetDiv not set. Adding new div' + targetChart + " " + chartID);
-    $( sourceTable ).after( "<div id='" + chartID + "' class='graphic'></div>" );
+    $( sourceTable ).after( "<div id='" + chartID + "' class=''></div>" );
     options.targetDiv = targetChart;//Added to the options so that it will be stored in the chartArray
 
   }else{
     targetChart = options.targetDiv
   }
-
-
 
 
   //set the variables — some of these seem redundant and arbitrary
@@ -248,19 +244,6 @@ function createChart(type, sourceTable, graphingVariable, options){
     .orient('bottom')
     .ticks(options.ticks);
 
-  function addYaxis(){
-    viz.append('g')
-    .attr('class', 'axis')
-    .attr('transform','translate('+padding+',0)')
-    .call(yAxis);
-  }
-
-
-  var yAxis = d3.svg.axis()
-    .scale(yScale)
-    .orient('left')
-    .ticks(options.ticks);
-
   function addXaxis(){
     if (options.xAxis){
       viz.append('g')
@@ -269,6 +252,21 @@ function createChart(type, sourceTable, graphingVariable, options){
       .call(xAxis);
     }
   }
+
+
+  var yAxis = d3.svg.axis()
+    .scale(yScale)
+    .orient('left')
+    .ticks(options.ticks);
+
+  function addYaxis(){
+    viz.append('g')
+    .attr('class', 'axis')
+    .attr('transform','translate('+padding+',0)')
+    .call(yAxis);
+  }
+
+
 
 
 
@@ -300,10 +298,10 @@ function createChart(type, sourceTable, graphingVariable, options){
   //Reformat the numbers --------------------------------------------------------
   var reformatTheNumber = false
     , decimalPlaces = options.decimalPlaces
-    , addComma=options.addComma
-    , addCommaSeparator=""
-    , prefix=options.prefix
-    , suffix=options.suffix;
+    , addComma = options.addComma
+    , addCommaSeparator = ""
+    , prefix = options.prefix
+    , suffix = options.suffix;
 
   //£ € $ % 
   if ( decimalPlaces >= 0 || prefix != "" || suffix != "" || addComma ){ reformatTheNumber=true; }
@@ -312,16 +310,20 @@ function createChart(type, sourceTable, graphingVariable, options){
   if ( decimalPlaces == "none" ){
     formatDecimals = function (originalNumber){return originalNumber};
   } else if ( decimalPlaces >= 0 ){ 
-    if (addComma){addCommaSeparator = ","}
+    if (addComma){ addCommaSeparator = "," }
     var styleNumber = addCommaSeparator + "." + decimalPlaces + "f";
     formatDecimals = d3.format(styleNumber);
   }
 
   //Do you want to add a prefix (e.g. £, €, $) or a suffix (e.g. %)
   if (reformatTheNumber){
-    formatNumber = function(originalNumber) {return prefix + formatDecimals(originalNumber) + suffix; }; //currencies
+    if(decimalPlaces === 'undefined'){
+      formatNumber = function(originalNumber) {return prefix + originalNumber + suffix }; //currencies
+    }else{
+      formatNumber = function(originalNumber) {return prefix + formatDecimals(originalNumber) + suffix }; //currencies
+    }
   }else {
-    formatNumber = function(originalNumber) {return originalNumber}
+    formatNumber = function(originalNumber) {return originalNumber }
   } 
 
 
@@ -351,7 +353,7 @@ function createChart(type, sourceTable, graphingVariable, options){
       //.on("mousedown", function(d, i){console.log(tableJSON[i].Sport+' players run '+d[graphingVariable[0]]+' miles per game.');})
 
     //optional function that exposes the data 
-    var myCircles=d3.selectAll('circle')
+    var myCircles=d3.selectAll('circle'); //you'll need to make this more specific so there won't be conflicts with multiple charts on page.
     if(options.clicked != ""){
       myCircles.on("mousedown", eval(options.clicked))
     }else{
@@ -431,7 +433,7 @@ function createChart(type, sourceTable, graphingVariable, options){
     arcs.append('text')
       .attr('transform', function(d){return "translate(" + arc.centroid(d) + ")"} )
       .attr('text-anchor', 'middle')
-      .text(function(d){return d.value;} )
+      .text(function(d){return formatNumber( d.value ) } )
       .classed('barvalues', true);
 
     if (options.addLegend){
@@ -444,13 +446,37 @@ function createChart(type, sourceTable, graphingVariable, options){
 
   //Horizontal bar chart--------------------------------------------------------
   function barChart(){
+    //Add the labels
+    if(options.labels != ""){
+      g.append('text')
+        .text(function(d){return d[label] } )
+        .attr('x',0)
+        .attr('y',function(d,i){return i * ( height / tableJSON.length ) + .5 * ( height / tableJSON.length ) + padding } )
+        .classed('barlabels', true);    
+    }
+
+
+    var textWidth = [];// an array for storing the width of the labels
+    var textBoxes = g.selectAll('text')
+      .each(function () {
+        var textWidthNumber = d3.select(this).style("width");
+        textWidthNumber = textWidthNumber.replace("px","");
+        textWidthNumber = Number(textWidthNumber);
+        textWidth.push(textWidthNumber);
+      });
+    paddingLeftLabels = Math.max.apply(Math, textWidth) + 7;
+    
+
+
     xScale.range([paddingLeftLabels,width-padding]);
 
+
+
     g.append("rect")
-      .attr('width',function(d){return xScale(d[graphingVariable]) - paddingLeftLabels} )
+      .attr('width',function(d){return xScale(d[graphingVariable] ) - paddingLeftLabels } )
       .attr('height',height / tableJSON.length - barPadding)
       .attr('x', paddingLeftLabels)
-      .attr('y',function(d,i){return i * ( height / tableJSON.length ) + padding} )      
+      .attr('y',function(d,i){return i * ( height / tableJSON.length ) + padding } )      
       .classed('bar',true)
       .on("mouseover", hoverColor)
       .on("mouseout", offColor)
@@ -459,7 +485,7 @@ function createChart(type, sourceTable, graphingVariable, options){
 
 
     //optional function that exposes the data 
-    var myRect=d3.selectAll('rect')
+    var myRect=g.selectAll('rect')
     if(options.clicked != ""){
       myRect.on("mousedown", eval(options.clicked) )
     }else{
@@ -485,22 +511,11 @@ function createChart(type, sourceTable, graphingVariable, options){
     */
 
 
-
-    //Add the labels
-    if(options.labels != ""){
-      g.append('text')
-        .text(function(d){return d[label] } )
-        .attr('x',0)
-        .attr('y',function(d,i){return i * ( height / tableJSON.length ) + .5 * ( height / tableJSON.length ) + padding} )
-        .classed('barlabels', true);    
-    }
-
-
     //Add the values
     g.append('text')
-      .text(function(d){console.log( d[graphingVariable] ); return formatNumber( d[graphingVariable] ) } )
-      .attr('x',function(d){return xScale(d[graphingVariable]) + 5} )
-      .attr('y',function(d,i){return i * (height/tableJSON.length) + .5 * ( height / tableJSON.length ) + padding} )
+      .text(function(d){return formatNumber( d[graphingVariable] ) } )
+      .attr('x',function(d){return xScale( d[graphingVariable] ) + 5} )
+      .attr('y',function(d,i){return i * ( height / tableJSON.length ) + .5 * ( height / tableJSON.length ) + padding} )
       .classed('barvalues', true);
 
     //Add the xAxis
@@ -525,7 +540,7 @@ function createChart(type, sourceTable, graphingVariable, options){
       .text(function(d, i){return formatNumber(d[graphingVariable] ) } );
 
 
-    var myRect = d3.selectAll('rect')
+    var myRect = g.selectAll('rect')
     if(options.clicked != ""){
       //optional user-defined function that exposes the data 
       myRect.on("mousedown", eval(options.clicked))
@@ -535,15 +550,6 @@ function createChart(type, sourceTable, graphingVariable, options){
     }
 
 
-    //add the labels
-    if(options.labels!=""){
-      g.append('text')
-          .text(function(d){return d[label] })
-          .attr('x',function (d, i){return i * ( width / tableJSON.length ) + ( width / tableJSON.length - barPadding ) / 2 + padding} )//Center the labels
-          .attr('y',height+20)
-          .attr('text-anchor','middle')
-          .classed('barlabels', true)
-    }
 
     //Add the values
     g.append('text')
@@ -612,6 +618,19 @@ Known issues:
 
 
 Things I fixed:
-* Multiple charts on a page don't resize.
-* Added an optional legend that's created as an HTML div that can be positioned with CSS and media queries
+* Automatically size the width of labels for bars (removed the 'paddingLeftLabels' parameter)
+* Fix the number formatting for decimals.
+* When you add new charts to the page, if there's a d3.select function that isn't scoped right you may add events etc.
+
+
+Resources for pie charts
+    //From interactive data viz book and http://bl.ocks.org/Guerino1/2295263
+    //http://jsfiddle.net/gregfedorov/Qh9X5/9/
+
+    //Need to fix the labels
+    //http://stackoverflow.com/questions/19681724/how-to-avoid-labels-overlapping-in-a-d3-js-pie-chart
+
+    //Need to add a key
+    //http://bl.ocks.org/ZJONSSON/3918369
 */
+

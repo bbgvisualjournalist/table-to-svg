@@ -1,6 +1,6 @@
 //The chartArray stores all of the information used to create (and recreate) each charts
-var chartArray=[];
-var currentChartNumber=0;
+var chartArray = [];
+var currentChartNumber = 0;
 
 
 //Function loops through a table and returns JSON —— There's probably a way to do this with D3. :/ 
@@ -47,7 +47,9 @@ function isNumber(n) {
 function rebuildCharts(){
   waitForFinalEvent(function(){
     for (i=0;i<chartArray.length;i++){
+      console.log(chartArray);
       d3.select(chartArray[i].options.svgID).remove();//Loop through and destroy the [i] chart (just the SVG)
+
       var legendID=chartArray[i].options.targetDiv + " div.legend"
       d3.select(legendID).remove();//Destroy the [i] chart div.legend
 
@@ -88,7 +90,17 @@ function chartHelp(){
 function createChart(type, sourceTable, graphingVariable, options){
   //CREATE THE JSON FROM THE TABLE --------------------------------------------------------
   var tableJSON= createJSON(sourceTable);
+  console.log("---This is the tableJSON ---")
   console.log(tableJSON);
+
+  //Test if the device/browser supports SVG?
+  var supportsSVG = document.implementation.hasFeature("http://www.w3.org/TR/SVG11/feature#BasicStructure", "1.1");
+  if(!supportsSVG){
+    if (type == 'bar' || type == 'column'){
+      console.log("The browser doesn't support SVG and the chart type will be reset to a table-based bar chart.")
+      type = "tableBarChart"
+    }
+  }
 
 
   //DEFINE THE VARIABLES --------------------------------------------------------
@@ -135,7 +147,7 @@ function createChart(type, sourceTable, graphingVariable, options){
     console.log("No option parameters set, so we'll just use the default settings. Type chartHelp() in the console for a list of the parameters.")
   }
 
-  if (!options.showTable){
+  if (!options.showTable && supportsSVG){
     $(sourceTable).css( {'position':'absolute','left':'-9999px'} ); //preferable to 'display':'none' because it's still readable by screen readers.
   }
 
@@ -146,7 +158,7 @@ function createChart(type, sourceTable, graphingVariable, options){
     var chartID = type + '_chart_' + graphingVariable + currentChartNumber;
     targetChart = '#' + chartID;
     console.log('targetDiv not set. Adding new div' + targetChart + " " + chartID);
-    $( sourceTable ).after( "<div id='" + chartID + "' class=''></div>" );
+    $( sourceTable ).after( "<div id='" + chartID + "' class='graphic'></div>" );
     options.targetDiv = targetChart;//Added to the options so that it will be stored in the chartArray
 
   }else{
@@ -177,28 +189,31 @@ function createChart(type, sourceTable, graphingVariable, options){
   }
 
 
-
-
   //CREATE THE SVG-------------------------------------------------------
 
   var svgID = 'svg_' + type + '_chart_' + graphingVariable+currentChartNumber;
   options.svgID = '#' + svgID;
 
-  var viz = d3.selectAll(targetChart).append('svg')
-    .attr("id", svgID)
-    .style('width', (width + margin.left + margin.right) + 'px')
-    .style('height', height + margin.top + margin.bottom + padding)
-    .append('g')
-    .attr('transform', 'translate(' + [margin.left, margin.top] + ')' );
-
-  //Add the <g>groups for the bars
-  if ( type == 'bar' || type == 'column' || type == 'scatterplot'){
-    var g = viz.selectAll('g')
-      .data(tableJSON)
-      .enter()
+  if ( type == 'bar' || type == 'column' || type == 'scatterplot' || type == 'donut' || type == 'pie'){
+    var viz = d3.selectAll(targetChart).append('svg')
+      .attr("id", svgID)
+      .style('width', (width + margin.left + margin.right) + 'px')
+      .style('height', height + margin.top + margin.bottom + padding)
       .append('g')
-  }
+      .attr('transform', 'translate(' + [margin.left, margin.top] + ')' );
 
+    //Add the <g>groups for the bars
+    if ( type == 'bar' || type == 'column' || type == 'scatterplot'){
+      var g = viz.selectAll('g')
+        .data(tableJSON)
+        .enter()
+        .append('g')
+    }
+  }else{
+    //tableBarChart
+    svgID = 'div_'+type + '_chart_' + graphingVariable+currentChartNumber;
+    options.svgID = '#' + svgID;
+  }
 
 
   //Add the chart creation information to the chartArray for resizing-----------------------------------------------
@@ -234,7 +249,6 @@ function createChart(type, sourceTable, graphingVariable, options){
   var xScale = d3.scale.linear()
     .domain([0, d3.max(tableJSON, function(d){ return d[graphingVariable] } ) ] )
     .range([0, width]);
-
 
 
 
@@ -290,6 +304,8 @@ function createChart(type, sourceTable, graphingVariable, options){
     htmlLegend.selectAll('.legend p').insert("span", "span.keyText")
       .style('background-color',function (d, i){ console.log(i + " " + options.colorScale[i]); return options.colorScale[i]})
       .classed('keySwatch', true);
+
+    console.log("CREATE THE LEGEND!")
   }
 
 
@@ -334,6 +350,71 @@ function createChart(type, sourceTable, graphingVariable, options){
 
 
   //DEFINE THE DIFFERENT TYPES OF CHARTS=======================================
+
+  //tableBarChart :: for devices/browsers that don't support SVG------------------
+  function tableBarChart(){
+    //If no labels are set, remove the labelPadding
+    if (options.labels!=""){
+      paddingLabelsLeft = 80      
+    } else {
+      paddingLabelsLeft = 0
+    }
+    var paddingValuesRight = 60
+
+
+    //Add a div to contain all of the bar chart tables
+    var tablesDiv = d3.selectAll(targetChart).append('div')
+      .attr("id", svgID)
+      .style('width', (width + margin.left + margin.right) + 'px')
+      //.style('height', height + margin.top + margin.bottom + padding)
+
+
+    //...You could probably do this better with a d3.scale
+    var barWidthNumber = tablesDiv.style("width");
+    barWidthNumber = barWidthNumber.replace("px","");
+    barWidthNumber = Number(barWidthNumber)-paddingLabelsLeft-paddingValuesRight;
+    console.log('textWidthNumber: '+barWidthNumber)
+
+
+    //Set the max value based on the data (for scaling)
+    var maxValue=d3.max(tableJSON, function(d){ return d[graphingVariable] } )
+
+
+    //Add a table (with a row) for each line of data
+    var tables = tablesDiv.selectAll('table')
+      .data(tableJSON)
+      .enter()
+      .append('table')
+      .classed('tableBars', true)
+      .append('tr')
+
+
+    //Add the labels if options.labels is set.
+    if (options.labels != ""){
+      tables.append('td')
+        .classed('labeled',true)
+        .text(function(d,i){return d[options.labels] } )
+        .style('text-align', 'left')
+        .style('width', paddingLabelsLeft + 'px')
+    }
+
+
+    //Add and scale the bar, and color it red.
+    tables.append('td')
+      .classed('bar', true)
+      .style('width', function(d,i){return d[graphingVariable] / maxValue * barWidthNumber } )
+      .style('bgcolor', '#900')
+      .style('background-color', '#900')
+
+
+    //Add the values to the bars
+    tables.append('td')
+      .classed('values', true)
+      .text(function(d,i){return d[graphingVariable] } )
+      .style('text-align', 'left')
+  }
+
+
 
   //Scatterplot chart ---------------------------------------------------------
   function scatterplotChart(){
@@ -528,19 +609,21 @@ function createChart(type, sourceTable, graphingVariable, options){
 
   //Vertical column chart--------------------------------------------------------
   function columnChart(){
+
     g.append("rect")
       .attr('width', width / tableJSON.length - barPadding)/*Makes the bar widths scale based on the number of bars */
       .attr('height', function(d){return height - yScale( d[graphingVariable] ) } )/*height scaled based on yScale */
       .attr('x', function(d,i){return i * ( width / tableJSON.length ) + padding} )
-      .attr('y', function(d){return yScale(d[graphingVariable] ) } )
-      .classed('bar',true)
+      .attr('y', function(d){return yScale(d[graphingVariable] ) } )     
+      //.classed('bar',true)
       .on("mouseover", hoverColor)
       .on("mouseout", offColor)
       .append('title')
       .text(function(d, i){return formatNumber(d[graphingVariable] ) } );
 
 
-    var myRect = g.selectAll('rect')
+    //var myRect = g.selectAll('rect')
+    var myRect = g.select('rect')
     if(options.clicked != ""){
       //optional user-defined function that exposes the data 
       myRect.on("mousedown", eval(options.clicked))
@@ -548,6 +631,7 @@ function createChart(type, sourceTable, graphingVariable, options){
       //Default click event
       myRect.on("mousedown", animate)
     }
+
 
 
 
@@ -576,6 +660,30 @@ function createChart(type, sourceTable, graphingVariable, options){
 
     //Add the yAxis at the end
     addYaxis();
+
+
+    //Add the legend. 
+    if (options.addLegend){
+      var color = d3.scale.ordinal()
+        .range(options.colorScale);
+      
+      myRect.attr('fill', function (d, i){return color(i) } )
+      console.log("add a legend? " + options.addLegend); 
+      addLegend();
+    }else{
+      myRect.classed('bar',true);
+
+      //add the labels ... should this be here or outside of the addLegend conditional?
+      if(options.labels!=""){
+        g.append('text')
+            .text(function(d){return d[label] })
+            .attr('x',function (d, i){return i * (width/tableJSON.length)+(width/tableJSON.length-barPadding)/2+padding;})//Center the labels
+            .attr('y',height+20)
+            .attr('text-anchor','middle')
+            .classed('barlabels', true)
+      }
+    }
+
   }
 
 
@@ -593,6 +701,9 @@ function createChart(type, sourceTable, graphingVariable, options){
   } else if(type == 'scatterplot'){
     scatterplotChart();
     console.log('scattered');
+  } else if(type == 'tableBarChart'){
+    tableBarChart();
+    console.log('table-based chart');
   } else {
     console.log("Sorry, we don't currently support "+type+" charts.")
   };
@@ -608,29 +719,23 @@ window.addEventListener('resize', function(event){
 
 /*
 Known issues:
+* Automatically size the labels for tableBarChart() If the width is hardcoded, it breaks.
+* Should the bar charts be created (or have the option) of being created with just HTML/divs/tables?
+* Fix the axis for bar charts
+* Fix the axis for column charts
+* Axis label options
+* Trying to add legends to the column chart
 * Should the JSON conversion strip the commas and prefixes/suffixes out of the chart?
 * add onclick so that you can find the data via on click.
 * Pie Chart values are lost in smaller wedges
-* Axis label options
-* Should the bar charts be created (or have the option) of being created with just HTML/divs?
 * supporting negative numbers on bar charts.
 
 
-
 Things I fixed:
-* Automatically size the width of labels for bars (removed the 'paddingLeftLabels' parameter)
-* Fix the number formatting for decimals.
-* When you add new charts to the page, if there's a d3.select function that isn't scoped right you may add events etc.
+* Added the tableBarChart() function to create a table-based bar chart
+* Add a test, if the browser/device doesn't support SVG AND the type=='bar', switch the type to 'tableBarChart'
+* Added the chartHelp() function for console-based documentation.
+* Added support for a legend with the column chart... There's a better solution...
 
-
-Resources for pie charts
-    //From interactive data viz book and http://bl.ocks.org/Guerino1/2295263
-    //http://jsfiddle.net/gregfedorov/Qh9X5/9/
-
-    //Need to fix the labels
-    //http://stackoverflow.com/questions/19681724/how-to-avoid-labels-overlapping-in-a-d3-js-pie-chart
-
-    //Need to add a key
-    //http://bl.ocks.org/ZJONSSON/3918369
 */
 
